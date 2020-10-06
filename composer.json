@@ -1,0 +1,15 @@
+{
+    "name": "arnoson/kirby-stats",
+    "description": "Simple and privacy friendly web statistics for Kirby CMS.",
+    "type": "kirby-plugin",
+    "require": {
+        "getkirby/composer-installer": "^1.2"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "arnoson",
+            "email": "omasocke@hotmail.de"
+        }
+    ]
+}
