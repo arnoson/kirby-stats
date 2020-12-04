@@ -91,7 +91,7 @@ class BrowserInfo {
       $this->name = $this->isBot()
         ? 'Bot'
         : (
-          array_key_exists($name, self::$supportedBrowsers)
+          in_array($name, self::$supportedBrowsers)
             ? $name
             : 'Other'
         );
