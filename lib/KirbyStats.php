@@ -11,9 +11,10 @@ class KirbyStats {
   protected static $dbPath;
 
   protected static function dbPath() {
-    return
+    return (
       self::$dbPath ?? 
-      self::$dbPath = dirname(__FILE__) . '/../stats.sqlite';
+      self::$dbPath = dirname(__FILE__) . '/../stats.sqlite'
+    );
   }
 
   protected static function connect() {
@@ -63,9 +64,9 @@ class KirbyStats {
     if(!Db::execute("CREATE TABLE BrowserStats(
       Date TEXT NOT NULL,
       BrowserId INTEGER NOT NULL,
-      BrowserVersion TEXT NOT NULL,
+      BrowserMajorVersion INTEGER NOT NULL,
       count INTEGER NOT NULL,
-      PRIMARY KEY (date, BrowserId, BrowserVersion)
+      PRIMARY KEY (date, BrowserId, BrowserMajorVersion)
     );")) {
       throw new Exception("Couldn't create `BrowserStats` table.");
     }
