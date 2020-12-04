@@ -3,7 +3,8 @@
     "description": "Simple and privacy friendly web statistics for Kirby CMS.",
     "type": "kirby-plugin",
     "require": {
-        "getkirby/composer-installer": "^1.2"
+        "getkirby/composer-installer": "^1.2",
+        "cbschuld/browser.php": "^1.9"
     },
     "license": "MIT",
     "authors": [
