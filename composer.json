@@ -1,16 +1,24 @@
 {
-    "name": "arnoson/kirby-stats",
-    "description": "Simple and privacy friendly web statistics for Kirby CMS.",
-    "type": "kirby-plugin",
-    "require": {
-        "getkirby/composer-installer": "^1.2",
-        "cbschuld/browser.php": "^1.9"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "arnoson",
-            "email": "omasocke@hotmail.de"
-        }
-    ]
+  "name": "arnoson/kirby-stats",
+  "description": "Simple and privacy friendly web statistics for Kirby CMS.",
+  "type": "kirby-plugin",
+  "autoload": {
+    "psr-4": {
+      "KirbyStats\\": "lib"
+    }
+  },
+  "require": {
+    "getkirby/composer-installer": "^1.2",
+    "cbschuld/browser.php": "^1.9"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "arnoson",
+      "email": "omasocke@hotmail.de"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  }
 }
