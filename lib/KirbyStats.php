@@ -1,7 +1,19 @@
 <?php
 
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/Analyzer/ReferrerAnalyzer.php';
+require_once __DIR__ . '/Stats/PageViewStats.php';
+require_once __DIR__ . '/Stats/PageVisitStats.php';
+require_once __DIR__ . '/Stats/BrowserStats.php';
+require_once __DIR__ . '/Stats/SystemStats.php';
+
 use Kirby\Database\Db;
 use Kirby\Toolkit\F;
+use KirbyStats\BrowserStats;
+use KirbyStats\PageViewStats;
+use KirbyStats\PageVisitStats;
+use KirbyStats\ReferrerAnalyzer;
+use KirbyStats\SystemStats;
 
 class KirbyStats {
   /** @var Kirby\Database\Database */
@@ -25,99 +37,31 @@ class KirbyStats {
   }
 
   /**
-   * Run the initial `install()` method if it there isn't a database file yet.
+   * Create database and all necessary tables if there isn't a database yet.
    */
-  public static function init() {
+  public static function setup() {
     if (!F::exists(self::dbPath())) {
-      self::install();
+      self::connect();
+      PageViewStats::setup();
+      PageVisitStats::setup();
+      BrowserStats::setup();
+      SystemStats::setup();
     }
   }
 
-  /**
-   * Create all necessary database tables.
-   */
-  public static function install() {
+  public static function analyze($path) {
+    $result = (new ReferrerAnalyzer())->analyze();
+
     self::connect();
 
-    // Create tables for page views and visitors.
-
-    if (!Db::execute("CREATE TABLE PageViews(
-      Hour TEXT NOT NULL,
-      PageId TEXT NOT NULL,
-      Count INTEGER NOT NULL,
-      PRIMARY KEY (Hour, PageId)
-    );")) {
-      throw new Exception("Couldn't create page_views table.");
+    if ($result['view']) {
+      PageViewStats::increase($path);
     }
 
-    if(!Db::execute("CREATE TABLE PageVisits(
-      Hour TEXT NOT NULL,
-      PageId TEXT NOT NULL,
-      Count INTEGER NOT NULL,
-      PRIMARY KEY (Hour, PageId)
-    );")) {
-      throw new Exception("Couldn't create page_visits table.");
-    }
-
-    // Create tables for browser statistics.
-    
-    if(!Db::execute("CREATE TABLE BrowserStats(
-      Date TEXT NOT NULL,
-      BrowserId INTEGER NOT NULL,
-      BrowserMajorVersion INTEGER NOT NULL,
-      count INTEGER NOT NULL,
-      PRIMARY KEY (date, BrowserId, BrowserMajorVersion)
-    );")) {
-      throw new Exception("Couldn't create `BrowserStats` table.");
-    }
-
-    if(!Db::execute("CREATE TABLE BrowserList(
-      Id INTEGER PRIMARY KEY AUTOINCREMENT,
-      Name TEXT NOT NULL
-    );")) {
-      throw new Exception("Couldn't create `BrowserList` table.");
-    }
-
-    if (!Db::execute("INSERT INTO
-        BrowserList(name)
-      VALUES
-        ('Opera'),
-        ('Edge'),
-        ('Internet Explorer'),
-        ('Firefox'),
-        ('Safari'),
-        ('Chrome');
-    ")) {
-      throw new Exception("Couldn't insert values into `BrowserList` table.");
-    }
-
-    // Create tables for system statistics.
-    
-    if (!Db::execute("CREATE TABLE SystemStats(
-      Date TEXT NOT NULL,
-      SystemId INTEGER NOT NULL,
-      Count INTEGER
-    );")) {
-      throw new Exception("Couldn't create `SystemStats` table.");
-    }
-
-    if (!Db::execute("CREATE TABLE SystemList(
-      Id INTEGER PRIMARY KEY AUTOINCREMENT,
-      Name TEXT
-    );")) {
-      throw new Exception("Couldn't create `SystemList` table.");
-    } 
-
-    if (!Db::execute("INSERT INTO
-        SystemList(name)
-      VALUES
-        ('Windows'),
-        ('Apple'),
-        ('Linux'),
-        ('Android'),
-        ('iOS');
-    ")) {
-      throw new Exception("Couldn't insert values into `SystemList` table.");
+    if ($result['visit']) {
+      PageVisitStats::increase($path);
+      BrowserStats::increase($result['browser']);
+      // SystemStats::increase($result['system']);
     }
   }
 }
