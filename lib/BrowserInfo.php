@@ -23,13 +23,6 @@ class BrowserInfo {
   protected $name;
 
   /**
-   * Short version of the browser name.
-   * 
-   * @var string
-   */
-  protected $shortName;  
-
-  /**
    * The browser version.
    * 
    * @var float
