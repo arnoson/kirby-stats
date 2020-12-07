@@ -9,6 +9,8 @@ use Exception;
 use Kirby\Database\Db;
 
 class SystemStats extends Stats {
+  public static $interval = Stats::INTERVAL_DAILY;
+
   public static $systems = [
     'Windows',
     'Apple',
@@ -20,27 +22,28 @@ class SystemStats extends Stats {
 
   public static function setup() {
     if (!Db::execute("CREATE TABLE SystemStats(
-      Date INTEGER NOT NULL,
+      Time INTEGER NOT NULL,
       SystemId INTEGER NOT NULL,
-      Count INTEGER DEFAULT 0
+      Count INTEGER DEFAULT 0,
+      PRIMARY KEY (Time, SystemId)
     );")) {
       throw new Exception("Couldn't create `SystemStats` table.");
     }
   }
 
   public static function increase($browser) {
-    $day = getCurrentDay();
+    $time = self::getCurrentIntervalTime();
     $systemId = array_search($browser['name'], self::$systems);
-    $bindings = [$day, $systemId];
+    $bindings = [$time, $systemId];
 
     Db::execute("INSERT OR IGNORE INTO
-        SystemStats(Day, SystemId)
+        SystemStats(Time, SystemId)
       VALUES(?, ?);
     ", $bindings);
 
     Db::execute("UPDATE BrowserStats
       SET Count = Count + 1
-      WHERE Day = ? AND SystemId = ?;
+      WHERE Time = ? AND SystemId = ?;
     ", $bindings);  
   }
 }
