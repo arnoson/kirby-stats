@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Stats;
 
 abstract class Stats {
   abstract static public function setup();

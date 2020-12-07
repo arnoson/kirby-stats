@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Analyzer;
 
 require_once __DIR__ . '/Analyzer.php';
 
@@ -14,7 +14,7 @@ class ReferrerAnalyzer extends Analyzer {
    * 
    * @return bool
    */
-  function isVisit(): bool {
+  protected function isVisit(): bool {
     return (
       !$this->refreshed() &&
       $this->host() != $this->referrerHost()
@@ -27,7 +27,7 @@ class ReferrerAnalyzer extends Analyzer {
    * 
    * @return  bool
    */
-  function isView(): bool {
+  protected function isView(): bool {
     return !$this->refreshed();
   }
 }

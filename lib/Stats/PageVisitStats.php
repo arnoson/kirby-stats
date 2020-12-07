@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Stats;
 
 use Kirby\Database\Db;
 use Exception;

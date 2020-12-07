@@ -1,19 +1,16 @@
 <?php
 
-require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/Analyzer/ReferrerAnalyzer.php';
-require_once __DIR__ . '/Stats/PageViewStats.php';
-require_once __DIR__ . '/Stats/PageVisitStats.php';
-require_once __DIR__ . '/Stats/BrowserStats.php';
-require_once __DIR__ . '/Stats/SystemStats.php';
+namespace KirbyStats;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Kirby\Database\Db;
 use Kirby\Toolkit\F;
-use KirbyStats\BrowserStats;
-use KirbyStats\PageViewStats;
-use KirbyStats\PageVisitStats;
-use KirbyStats\ReferrerAnalyzer;
-use KirbyStats\SystemStats;
+use KirbyStats\Stats\BrowserStats;
+use KirbyStats\Stats\PageViewStats;
+use KirbyStats\Stats\PageVisitStats;
+use KirbyStats\Stats\SystemStats;
+use KirbyStats\Analyzer\ReferrerAnalyzer;
 
 class KirbyStats {
   /** @var Kirby\Database\Database */
@@ -23,16 +20,13 @@ class KirbyStats {
   protected static $dbPath;
 
   protected static function dbPath() {
-    return (
-      self::$dbPath ?? 
-      self::$dbPath = dirname(__FILE__) . '/../stats.sqlite'
-    );
+    return option('arnoson.kirby-stats.sqlite');
   }
 
-  protected static function connect() {
+  public static function connect() {
     self::$db = Db::connect([
       'type' => 'sqlite',
-      'database' => self::$dbPath
+      'database' => self::dbPath()
     ]);    
   }
 
@@ -49,7 +43,7 @@ class KirbyStats {
     }
   }
 
-  public static function analyze($path) {
+  public static function analyze($path): array {
     $result = (new ReferrerAnalyzer())->analyze();
 
     self::connect();
@@ -63,5 +57,7 @@ class KirbyStats {
       BrowserStats::increase($result['browser']);
       // SystemStats::increase($result['system']);
     }
+
+    return $result;
   }
 }

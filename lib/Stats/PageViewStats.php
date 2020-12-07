@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Stats;
 
 use Kirby\Database\Db;
 use Exception;
@@ -20,9 +20,9 @@ class PageViewStats extends Stats {
     }    
   }
 
-  public static function increase($Path) {
+  public static function increase($path) {
     $hour = getCurrentHour();
-    $bindings = [$hour, $Path];
+    $bindings = [$hour, $path];
 
     Db::execute("INSERT OR IGNORE INTO
         PageViewStats(Hour, Path)

@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Stats;
 
 include_once __DIR__ . '/../helpers.php';
 include_once __DIR__ . '/Stats.php';
@@ -24,7 +24,7 @@ class BrowserStats extends Stats {
       Day INTEGER NOT NULL,
       BrowserId INTEGER NOT NULL,
       MajorVersion INTEGER NOT NULL,
-      count INTEGER DEFAULT 0,
+      Count INTEGER DEFAULT 0,
       PRIMARY KEY (Day, BrowserId, MajorVersion)
     );")) {
       throw new Exception("Couldn't create `BrowserStats` table.");

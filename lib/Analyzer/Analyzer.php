@@ -1,8 +1,10 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats\Analyzer;
 
 require_once __DIR__ . '/../BrowserInfo.php';
+
+use KirbyStats\BrowserInfo;
 
 /**
  * The Analyzer base class. All inherited classes must implement the `isView()`
