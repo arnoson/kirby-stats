@@ -4,60 +4,59 @@ namespace KirbyStats;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Kirby\Database\Db;
-use Kirby\Toolkit\F;
-use KirbyStats\Stats\BrowserStats;
-use KirbyStats\Stats\PageViewStats;
-use KirbyStats\Stats\PageVisitStats;
-use KirbyStats\Stats\SystemStats;
+use Kirby\Database\Database;
 use KirbyStats\Analyzer\ReferrerAnalyzer;
+use KirbyStats\Stats\ViewStats;
+use KirbyStats\Stats\VisitStats;
+use KirbyStats\Stats\BrowserStats;
+use KirbyStats\Stats\SystemStats;
 
 class KirbyStats {
-  /** @var Kirby\Database\Database */
-  protected static $db;
-
-  /** @var string */
-  protected static $dbPath;
-
-  protected static function dbPath() {
-    return option('arnoson.kirby-stats.sqlite');
-  }
-
-  public static function connect() {
-    self::$db = Db::connect([
-      'type' => 'sqlite',
-      'database' => self::dbPath()
-    ]);    
-  }
+  /**
+   * @var \Kirby\Database\Database
+   */
+  protected $database;
 
   /**
-   * Create database and all necessary tables if there isn't a database yet.
+   * @var KirbyStats\Stats\Stats[]
    */
-  public static function setup() {
-    if (!F::exists(self::dbPath())) {
-      self::connect();
-      PageViewStats::setup();
-      PageVisitStats::setup();
-      BrowserStats::setup();
-      SystemStats::setup();
+  protected $statsInstances;
+
+  public function __construct() {
+    $database = $this->database = new Database([
+      'type' => 'sqlite',
+      'database' => option('arnoson.kirby-stats.sqlite')
+    ]);
+
+    $this->statsInstances = [
+      new ViewStats($database, $this->getStatsOptions('ViewStats')),
+      new VisitStats($database, $this->getStatsOptions('VisitStats')),
+      new BrowserStats($database, $this->getStatsOptions('BrowserStats')),
+      new SystemStats($database, $this->getStatsOptions('SystemStats'))
+    ];
+  }
+
+  protected function getStatsOptions($className) {
+    return option('arnoson.kirby-stats.' . lcfirst($className));
+  }
+
+  public function install() {
+    foreach ($this->statsInstances as $instance) {
+      $instance->install();
     }
   }
 
-  public static function analyze($path): array {
-    $result = (new ReferrerAnalyzer())->analyze();
+  public function log($path) {
+    $analysis = (new ReferrerAnalyzer)->analyze();
+    foreach ($this->statsInstances as $instance) {
+      $instance->log($analysis, $path);
+    }    
+  }
 
-    self::connect();
-
-    if ($result['view']) {
-      PageViewStats::increase($path);
+  public function stats() {
+    $result = [];
+    foreach ($this->statsInstances as $instance) {
+      $result[lcfirst($instance->tableName)] = $instance->stats();
     }
-
-    if ($result['visit']) {
-      PageVisitStats::increase($path);
-      BrowserStats::increase($result['browser']);
-      // SystemStats::increase($result['system']);
-    }
-
-    return $result;
   }
 }

@@ -2,48 +2,36 @@
 
 namespace KirbyStats\Stats;
 
-include_once __DIR__ . '/../helpers.php';
 include_once __DIR__ . '/Stats.php';
 
-use Exception;
-use Kirby\Database\Db;
-
+/**
+ * Log system statistics.
+ */
 class SystemStats extends Stats {
-  public static $interval = Stats::INTERVAL_DAILY;
-
-  public static $systems = [
-    'Windows',
-    'Apple',
-    'Linux',
-    'Android',
-    'iOS',
-    'Other'
+  public const SYSTEMS = [
+    'Other' => 0,
+    'Windows' => 1,
+    'Apple' => 2,
+    'Linux'=> 3,
+    'Android' => 4,
+    'iOS' => 5
   ];
 
-  public static function setup() {
-    if (!Db::execute("CREATE TABLE SystemStats(
-      Time INTEGER NOT NULL,
-      SystemId INTEGER NOT NULL,
-      Count INTEGER DEFAULT 0,
-      PRIMARY KEY (Time, SystemId)
-    );")) {
-      throw new Exception("Couldn't create `SystemStats` table.");
-    }
+  public static $columns = [
+    'SystemId' => ['type' => 'int']
+  ];
+
+  protected function getSystemId(string $name): int {
+    return static::SYSTEMS[$name] ?? static::SYSTEMS['Other'];
+  }  
+
+  protected function shouldLog($analysis): bool {
+    return $analysis['visit'];
   }
 
-  public static function increase($browser) {
-    $time = self::getCurrentIntervalTime();
-    $systemId = array_search($browser['name'], self::$systems);
-    $bindings = [$time, $systemId];
-
-    Db::execute("INSERT OR IGNORE INTO
-        SystemStats(Time, SystemId)
-      VALUES(?, ?);
-    ", $bindings);
-
-    Db::execute("UPDATE BrowserStats
-      SET Count = Count + 1
-      WHERE Time = ? AND SystemId = ?;
-    ", $bindings);  
+  protected function getColumnValues(array $analysis): array {
+    return [
+      'SystemId' => $this->getSystemId($analysis['browser']['system'])
+    ];
   }
 }

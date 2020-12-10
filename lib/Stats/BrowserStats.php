@@ -2,50 +2,40 @@
 
 namespace KirbyStats\Stats;
 
-include_once __DIR__ . '/../helpers.php';
 include_once __DIR__ . '/Stats.php';
 
-use Exception;
-use Kirby\Database\Db;
-
+/**
+ * Log browser statistics.
+ */
 class BrowserStats extends Stats {
-  public static $interval = Stats::INTERVAL_DAILY;
-
-  public static $browsers = [
-    'Opera',
-    'Edge',
-    'Internet Explorer',
-    'Firefox',
-    'Safari',
-    'Chrome',
-    'Other'
+  public const BROWSERS = [
+    'Other' => 0,
+    'Opera' => 1,
+    'Edge' => 2,
+    'Internet Explorer' => 3,
+    'Firefox' => 4,
+    'Safari' => 5,
+    'Chrome' => 6
   ];
 
-  public static function setup() {
-    if(!Db::execute("CREATE TABLE BrowserStats(
-      Time INTEGER NOT NULL,
-      BrowserId INTEGER NOT NULL,
-      MajorVersion INTEGER NOT NULL,
-      Count INTEGER DEFAULT 0,
-      PRIMARY KEY (Time, BrowserId, MajorVersion)
-    );")) {
-      throw new Exception("Couldn't create `BrowserStats` table.");
-    }
+  public static $columns = [
+    'BrowserId' => ['type' => 'int'],
+    'MajorVersion' => ['type' => 'int']
+  ];
+
+  protected function getBrowserId(string $name): int {
+    return static::BROWSERS[$name] ?? static::BROWSERS['Other'];
   }
 
-  public static function increase($browser) {
-    $time = self::getCurrentIntervalTime();
-    $browserId = array_search($browser['name'], self::$browsers);
-    $bindings = [$time, $browserId, $browser['majorVersion']];
+  protected function shouldLog(array $analysis): bool {
+    return $analysis['visit'];
+  }
 
-    Db::execute("INSERT OR IGNORE INTO
-        BrowserStats(Time, BrowserId, MajorVersion)
-      VALUES(?, ?, ?);
-    ", $bindings);
-
-    Db::execute("UPDATE BrowserStats
-      SET Count = Count + 1
-      WHERE Time = ? AND BrowserId = ? AND MajorVersion = ?;
-    ", $bindings);  
+  protected function getColumnValues(array $analysis): array {
+    $browser = $analysis['browser'];
+    return [
+      'BrowserId' => $this->getBrowserId($browser['name']),
+      'MajorVersion' => $browser['majorVersion']      
+    ];   
   }
 }

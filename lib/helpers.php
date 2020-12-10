@@ -1,25 +1,13 @@
 <?php
 
-/** 
- * Get the current hour in unix time.
- */
-function getCurrentHour() {
-  $time = (new DateTime())->getTimestamp();
-  return $time - ($time % 3600);
-}
-
-/** 
- * Get the current day in unix time.
- */
-function getCurrentDay() {
-  $time = (new DateTime())->getTimestamp();
-  return $time - ($time % 86400);
-}
-
 /**
  * Test if a string starts with another string.
  */
-function startsWith ($string, $startString) { 
+function startsWith ($string, $startString, $caseSensitive = true) { 
+  if (!$caseSensitive) {
+    $string = strtolower($string);
+    $startString = strtolower($startString);
+  }
   return (substr($string, 0, strlen($startString)) === $startString); 
 }
 
