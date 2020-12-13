@@ -50,13 +50,14 @@ class KirbyStats {
     $analysis = (new ReferrerAnalyzer)->analyze();
     foreach ($this->statsInstances as $instance) {
       $instance->log($analysis, $path);
-    }    
+    }
   }
 
-  public function stats() {
+  public function stats($from, $to): array {
     $result = [];
     foreach ($this->statsInstances as $instance) {
-      $result[lcfirst($instance->tableName)] = $instance->stats();
+      $result[lcfirst($instance->tableName)] = $instance->stats($from, $to);
     }
+    return $result;
   }
 }

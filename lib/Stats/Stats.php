@@ -11,7 +11,6 @@ use Exception;
  * The Stats base class. Provides all functionality to log page or site
  * statistics. All inherited classes must implement `shouldLog()`. If custom
  * columns are used `getColumnValues` must also be implemented.
- * 
  */
 abstract class Stats {
   const INTERVAL_HOURLY = 0;
@@ -75,13 +74,14 @@ abstract class Stats {
 
     $this->database = $database;
     $this->tableName = (new \ReflectionClass($this))->getShortName();
-    $this->debug = option('config', false);
+    $this->debug = option('debug', false);
     $this->interval = $options['interval'];
     $this->logPerPath = $options['logPerPath'];
   }
 
   /**
-   * 
+   * Create the stats table in the database.
+   * @return bool Wether or not the stats table was created.
    */
   public function install(): bool {
     $commonColumns = [
@@ -90,7 +90,7 @@ abstract class Stats {
       'Count' => ['type' => 'int']
     ];
     if ($this->logPerPath) {
-      $columns['Path'] = ['type' => 'text', 'key' => 'primary'];
+      $commonColumns['Path'] = ['type' => 'text', 'key' => 'primary'];
     }
 
     $customColumns = array_map(function($column) {
@@ -102,58 +102,54 @@ abstract class Stats {
     return $this->database->createTable($this->tableName, $columns);
   }
 
-  protected function getCurrentIntervalTime() {
-    $time = (new DateTime())->getTimestamp();
-    return $time - ($time % static::$secondsInInterval[$this->interval]);
-  }
-
   /**
-   * Execute a insert query and ignore constraints.
+   * Log the current request.
+   * @param $analysis The information returned from the Analyzer class.
+   * @param $path The path associated with the current request.
    */
-  protected function insertOrIgnore(array $values): bool {
-    $insert = $this->database->sql()->insert([
-      'table' => $this->tableName,
-      'values' => $values,
-      'bindings' => []
-    ]);
-
-    // Kirby's `Sql` behaviour might change in the future, so to be safe we
-    // first test if `OR IGNORE` is not present and than add it.
-    if (!startsWith($insert['query'], 'INSERT OR IGNORE', false)) {
-      $insert['query'] =
-        preg_replace('/^INSERT/i', 'INSERT OR IGNORE', $insert['query']);
+  public function log(array $analysis, string $path) {
+    if ($this->shouldLog($analysis)) {
+      $columnValues = $this->getColumnValues($analysis);
+      if (!$this->validateColumnValues($columnValues) && $this->debug) {
+        throw new Exception('A value was not provided for all columns.');
+      }
+      $this->increase($columnValues, $path);
     }
-
-    return $this->database->execute($insert['query'], $insert['bindings']);
   }
 
   /**
-   * Execute an update query.
+   * Return wether or not a request should be logged. For example the
+   * `BrowserStats` class only logs the browser information if the request was
+   * an unique page visit.
    */
-  protected function update(array $values):bool {
-    $update = $this->database->sql()->update([
+  abstract protected function shouldLog(array $analysis): bool;
+
+  /**
+   * Return all stats for the time period.
+   * @param DateTime $from
+   * @param DateTime $to
+   */
+  public function stats($from, $to, $page = null): array {
+    $sql = $this->sql();
+    $rows = $this->query($sql->select([
       'table' => $this->tableName,
-      'values' => $values,
-      'bindings' => []
-    ]);
+      'columns' => '*',
+      'where' => $sql->quoteIdentifier('Time') . ' BETWEEN ? AND ?',
+      'bindings' => [$from->getTimestamp(), $to->getTimestamp()]
+    ]));
 
-    return $this->database->execute($update['query'], $update['bindings']);
-  }
-
-  public function increaseCounter($constraints): bool {
-    $sql = $this->database->sql();
-    $bindings = [];
-
-    $countColumn = $sql->quoteIdentifier('Count');
-    $query = [
-      "UPDATE {$sql->tableName($this->tableName)}",
-      "SET $countColumn = $countColumn + 1"
-    ];
-    $sql->extend($query, $bindings, $sql->where($constraints));
+    $result = [];
+    foreach ($rows as $row) {
+      $result[$row->Time()] = $row;
+    }
     
-    return $this->database->execute($sql->query($query), $bindings);
-  }
+    return $result;
+  }  
 
+  /**
+   * Creates a new counter for the current time interval if it does not already
+   * exist, and increments it.
+   */
   protected function increase($constraints = [], string $path) {
     $constraints['Time'] = $this->getCurrentIntervalTime();
     $constraints['IntervalType'] = $this->interval;
@@ -176,16 +172,38 @@ abstract class Stats {
     }
   }
 
-  public function stats($from, $to, $page = null) {
+  /**
+   * Increase an existing counter.
+   */
+  protected function increaseCounter(array $constraints): bool {
+    $sql = $this->sql();
+    $bindings = [];
 
+    $countColumn = $sql->quoteIdentifier('Count');
+    $query = [
+      "UPDATE {$sql->tableName($this->tableName)}",
+      "SET $countColumn = $countColumn + 1"
+    ];
+    $sql->extend($query, $bindings, $sql->where($constraints));
+    
+    return $this->execute([
+      'query' => $sql->query($query),
+      'bindings' => $bindings
+    ]);
   }
 
-  abstract protected function shouldLog(array $analysis): bool;
-
+  /**
+   * Return the column values that should be logged. For example the
+   * `BrowserStats` class extracts the browser name and version from the
+   * $analysis array.
+   */
   protected function getColumnValues(array $analysis): array {
     return [];
   }
 
+  /**
+   * Make sure we have a value for every custom column.
+   */
   protected function validateColumnValues(array $columnValues) {
     foreach (array_keys(static::$columns) as $key) {
       if (!isset($columnValues[$key])) {
@@ -195,13 +213,69 @@ abstract class Stats {
     return true;
   }
 
-  public function log(array $analysis, $path) {
-    if ($this->shouldLog($analysis)) {
-      $columnValues = $this->getColumnValues($analysis);
-      if (!$this->validateColumnValues($columnValues) && $this->debug) {
-        throw new Exception('A value was not provided for all columns.');
-      }
-      $this->increase($columnValues, $path);
+  /**
+   * Returns the time for the current interval. For example, if the interval is
+   * hourly, the hour started is returned.
+   * @return int The current interval time as a timestamp.
+   */
+  protected function getCurrentIntervalTime(): int {
+    $time = (new DateTime())->getTimestamp();
+    return $time - ($time % static::$secondsInInterval[$this->interval]);
+  } 
+
+  /**
+   * Return sql generator instance for the database.
+   * @return \Kirby\Database\Sql
+   */
+  protected function sql() {
+    return $this->database->sql();
+  }
+
+  /**
+   * Execute a sql query.
+   */
+  protected function execute(array $params): bool {
+    return $this->database->execute($params['query'], $params['bindings']);
+  }
+
+  /**
+   * Execute a sql query that expects a result.
+   */
+  protected function query(array $params) {
+    return $this->database->query(
+      $params['query'],
+      $params['bindings']
+    );
+  }
+
+  /**
+   * Execute an update query.
+   */
+  protected function update(array $values):bool {
+    return $this->execute($this->sql()->update([
+      'table' => $this->tableName,
+      'values' => $values,
+      'bindings' => []
+    ]));
+  }
+
+  /**
+   * Execute a insert query and ignore constraints.
+   */
+  protected function insertOrIgnore(array $values): bool {
+    $insert = $this->sql()->insert([
+      'table' => $this->tableName,
+      'values' => $values,
+      'bindings' => []
+    ]);
+
+    // Kirby's `Sql` behaviour might change in the future, so to be safe we
+    // first test if `OR IGNORE` is not present and than add it.
+    if (!startsWith($insert['query'], 'INSERT OR IGNORE', false)) {
+      $insert['query'] =
+        preg_replace('/^INSERT/i', 'INSERT OR IGNORE', $insert['query']);
     }
+
+    return $this->execute($insert);
   }
 }
