@@ -19,6 +19,16 @@
     }
   ],
   "require-dev": {
-    "phpunit/phpunit": "^9.5"
+    "phpunit/phpunit": "^9.5",
+    "getkirby/cms": "^3.8"
+  },
+  "config": {
+    "allow-plugins": {
+      "optimize-autoloader": true,
+      "getkirby/composer-installer": true
+    }
+  },
+  "scripts": {
+    "dev": "php -S localhost:8888  -t ./example/ ./example/router.php"
   }
 }

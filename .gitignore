@@ -9,3 +9,6 @@
 
 *.sqlite
 .phpunit.result.cache
+
+# Kirbys
+/kirby
