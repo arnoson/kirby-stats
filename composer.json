@@ -4,7 +4,7 @@
   "type": "kirby-plugin",
   "autoload": {
     "psr-4": {
-      "KirbyStats\\": "lib"
+      "arnoson\\KirbyStats\\": "lib"
     }
   },
   "require": {
@@ -27,8 +27,5 @@
       "optimize-autoloader": true,
       "getkirby/composer-installer": true
     }
-  },
-  "scripts": {
-    "dev": "php -S localhost:8888  -t ./example/ ./example/router.php"
   }
 }

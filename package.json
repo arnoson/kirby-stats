@@ -1,0 +1,16 @@
+{
+  "name": "kirby-stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "php -S localhost:8888  -t ./example/ ./example/router.php"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@prettier/plugin-php": "^0.19.2",
+    "prettier": "^2.7.1"
+  }
+}

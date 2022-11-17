@@ -1,63 +1,57 @@
 <?php
 
-namespace KirbyStats;
+namespace arnoson\KirbyStats;
+
+use Kirby\Database\Database;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Kirby\Database\Database;
-use KirbyStats\Analyzer\ReferrerAnalyzer;
-use KirbyStats\Stats\ViewStats;
-use KirbyStats\Stats\VisitStats;
-use KirbyStats\Stats\BrowserStats;
-use KirbyStats\Stats\SystemStats;
-
 class KirbyStats {
-  /**
-   * @var \Kirby\Database\Database
-   */
-  protected $database;
+  protected Counters $stats;
 
-  /**
-   * @var KirbyStats\Stats\Stats[]
-   */
-  protected $statsInstances;
+  protected const BROWSERS = [
+    'Opera',
+    'Edge',
+    'InternetExplorer',
+    'Firefox',
+    'Safari',
+    'Chrome',
+  ];
+
+  protected const OS = ['Windows', 'Apple', 'Linux', 'Android', 'iOS'];
 
   public function __construct() {
-    $database = $this->database = new Database([
+    $counters = array_merge(self::BROWSERS, self::OS, ['Views', 'Visits']);
+    $interval = option('arnoson.kirby-stats.interval', 'hourly');
+    $database = new Database([
       'type' => 'sqlite',
-      'database' => option('arnoson.kirby-stats.sqlite')
+      'database' => option('arnoson.kirby-stats.sqlite'),
     ]);
 
-    $this->statsInstances = [
-      new ViewStats($database, $this->getStatsOptions('ViewStats')),
-      new VisitStats($database, $this->getStatsOptions('VisitStats')),
-      new BrowserStats($database, $this->getStatsOptions('BrowserStats')),
-      new SystemStats($database, $this->getStatsOptions('SystemStats'))
-    ];
-  }
-
-  protected function getStatsOptions($className) {
-    return option('arnoson.kirby-stats.' . lcfirst($className));
-  }
-
-  public function install() {
-    foreach ($this->statsInstances as $instance) {
-      $instance->install();
-    }
+    $this->stats = new Counters($database, 'Stats', $interval, $counters);
   }
 
   public function log($path) {
-    $analysis = (new ReferrerAnalyzer)->analyze();
-    foreach ($this->statsInstances as $instance) {
-      $instance->log($analysis, $path);
+    $analysis = (new Analyzer())->analyze();
+    if (!$analysis['view'] || !$analysis['visit']) {
+      return;
     }
-  }
 
-  public function stats($from, $to): array {
-    $result = [];
-    foreach ($this->statsInstances as $instance) {
-      $result[lcfirst($instance->tableName)] = $instance->stats($from, $to);
+    $counters = [];
+    if ($analysis['visit']) {
+      $counters[] = 'Visits';
+
+      if (in_array($analysis['browser'], self::BROWSERS)) {
+        $counters[] = $analysis['browser'];
+      }
+
+      if (in_array($analysis['os'], self::OS)) {
+        $counters[] = $analysis['os'];
+      }
+    } elseif ($analysis['view']) {
+      $counters[] = 'Views';
     }
-    return $result;
+
+    $this->stats->increase($path, $counters);
   }
 }
