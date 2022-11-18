@@ -4,13 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "php -S localhost:8888  -t ./example/ ./example/router.php"
+    "server": "php -q -S localhost:8888  -t ./example/ ./example/router.php",
+    "dev": "kirbyup serve src/index.ts",
+    "build": "kirbyup src/index.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Arno Schlipf",
   "license": "MIT",
   "devDependencies": {
     "@prettier/plugin-php": "^0.19.2",
+    "kirbyup": "^2.1.0",
     "prettier": "^2.7.1"
+  },
+  "dependencies": {
+    "chartist": "^1.3.0"
   }
 }

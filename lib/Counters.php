@@ -10,7 +10,7 @@ class Counters {
   protected string $tableName;
   protected array $counters;
 
-  protected const INTERVALS = [
+  const INTERVALS = [
     'hourly' => 0,
     'daily' => 1,
     'weekly' => 2,
@@ -18,7 +18,7 @@ class Counters {
     'yearly' => 4,
   ];
 
-  protected const SECONDS_IN_INTERVAL = [
+  const SECONDS_IN_INTERVAL = [
     self::INTERVALS['hourly'] => 3600,
     self::INTERVALS['daily'] => 86400,
     self::INTERVALS['weekly'] => 604800,
@@ -87,7 +87,8 @@ class Counters {
    */
   public function increase($name, $counters): bool {
     $sql = $this->database->sql();
-    $time = $this->getCurrentIntervalTime();
+    $now = (new DateTime())->getTimestamp();
+    $time = self::getIntervalTime($now, $this->interval);
 
     // Add a new entry (if none exists already).
     $this->addEntry($name, $time);
@@ -105,28 +106,39 @@ class Counters {
     return $this->database->execute($query, [$name, $time]);
   }
 
-  public function select(DateTime $from, DateTime $to, string $name = null) {
-    $where = '("Time" BETWEEN ? AND ?)';
+  public function select(
+    DateTime $from,
+    DateTime $to,
+    int $interval,
+    string $name = null
+  ) {
+    $where = '"Time" BETWEEN ? AND ?';
+    $bindings = [$from->getTimestamp(), $to->getTimestamp()];
     if ($name) {
       $where .= ' AND "Name" = ?';
+      $bindings[] = $name;
     }
 
-    $select = $this->database->sql->select([
+    $select = $this->database->sql()->select([
       'table' => $this->tableName,
       'columns' => '*',
       'where' => $where,
-      'bindings' => [$from->getTimestamp(), $to->getTimestamp(), $name],
+      'bindings' => $bindings,
     ]);
 
-    return $this->database->query($select['query'], $select['bindings']);
+    $rows = $this->database
+      ->query($select['query'], $select['bindings'])
+      ->toArray(fn($el) => $el->toArray());
+
+    $data = new CountersData($rows, $this->counters);
+    return $data->groupByInterval($interval, $from, $to);
   }
 
   /**
-   * Get the time for the current interval. For example, if the interval is
-   * hourly, the hour started is returned.
+   * Get the time for the interval. For example, if the interval is hourly, the
+   * hour started for the time is returned.
    */
-  protected function getCurrentIntervalTime(): int {
-    $time = (new DateTime())->getTimestamp();
-    return $time - ($time % self::SECONDS_IN_INTERVAL[$this->interval]);
+  static function getIntervalTime(int $time, int $interval) {
+    return $time - ($time % self::SECONDS_IN_INTERVAL[$interval]);
   }
 }

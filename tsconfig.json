@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "Esnext",
+    "moduleResolution": "node"
+  },
+  "vueCompilerOptions": {
+    "target": 2.7
+  }
+}

@@ -11,4 +11,5 @@ App::plugin('arnoson/kirby-stats', [
   ],
   'hooks' => include __DIR__ . '/hooks/hooks.php',
   'api' => include __DIR__ . '/api/api.php',
+  'areas' => include __DIR__ . '/areas/areas.php',
 ]);

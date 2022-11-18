@@ -96,7 +96,6 @@ class Analyzer {
    * @return bool
    */
   protected function refreshed(): bool {
-    return false;
     return $this->refreshed ??
       ($this->refreshed =
         isset($_SERVER['HTTP_CACHE_CONTROL']) &&
