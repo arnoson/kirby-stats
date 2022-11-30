@@ -2,80 +2,72 @@
 
 namespace arnoson\KirbyStats;
 
-use DateTime;
+use DatePeriod;
+use DateTimeImmutable;
 use Kirby\Database\Database;
+use Kirby\Toolkit\A;
 
 class Counters {
-  protected Database $database;
-  protected string $tableName;
-  protected array $counters;
-
-  const INTERVALS = [
-    'hourly' => 0,
-    'daily' => 1,
-    'weekly' => 2,
-    'monthly' => 3,
-    'yearly' => 4,
-  ];
-
-  const SECONDS_IN_INTERVAL = [
-    self::INTERVALS['hourly'] => 3600,
-    self::INTERVALS['daily'] => 86400,
-    self::INTERVALS['weekly'] => 604800,
-    self::INTERVALS['monthly'] => 2629800,
-    self::INTERVALS['yearly'] => 31557600,
-  ];
+  private Database $database;
+  private string $tableName;
+  private array $counterNames;
+  private int $interval;
 
   public function __construct(
     Database $database,
     $tableName,
-    $interval,
-    $counters
+    $counterNames,
+    $interval
   ) {
-    $this->counters = $counters;
     $this->database = $database;
     $this->tableName = $tableName;
-    $this->interval = self::INTERVALS[strtolower($interval)];
-
+    $this->counterNames = $counterNames;
+    $this->interval = $interval;
     $this->create();
   }
 
-  public function create() {
+  /**
+   * Create a table (if it doesn't already exist) to store the counter's values
+   * for each interval.
+   */
+  private function create(): bool {
     $columns = [
-      '"Name" TEXT NULL',
-      '"Time" INTEGER NULL',
-      '"Interval" INTEGER NULL',
+      '"path" TEXT NULL',
+      '"time" INTEGER NULL',
+      '"interval" INTEGER NULL',
     ];
 
-    foreach ($this->counters as $name) {
+    foreach ($this->counterNames as $name) {
       $columns[] = "\"$name\" INTEGER NOT NULL DEFAULT 0";
     }
 
-    $columns[] = 'PRIMARY KEY ("Name", "Time", "Interval")';
+    $columns[] = 'PRIMARY KEY ("path", "time", "interval")';
 
     // We can't use `sql->createTable()`, because default values won't work with
     // bindings in sqlite. So we have to create the query manually.
-    $query =
-      'CREATE TABLE ' .
-      $this->database->sql()->quoteIdentifier($this->tableName) .
-      ' (' .
-      join(', ', $columns) .
-      ')';
+    $columns = join(', ', $columns);
+    $tableName = $this->database->sql()->quoteIdentifier($this->tableName);
+    $query = "CREATE TABLE $tableName ($columns)";
 
     return $this->database->execute($query);
   }
 
+  public function remove(): bool {
+    $tableName = $this->database->sql()->quoteIdentifier($this->tableName);
+    $query = "DROP TABLE $tableName";
+    return $this->database->execute($query);
+  }
+
   /**
-   * Add a new entry (if one doesn't already exist) for the specified name and
-   * time.
+   * Add a new entry (if one doesn't already exist).
    */
-  protected function addEntry(string $name, int $time): bool {
+  private function addEntry(string $path, int $time): bool {
     $insert = $this->database->sql()->insert([
       'table' => $this->tableName,
       'values' => [
-        'Name' => $name,
-        'Time' => $time,
-        'Interval' => $this->interval,
+        'path' => $path,
+        'time' => $time,
+        'interval' => $this->interval,
       ],
       'bindings' => [],
     ]);
@@ -83,40 +75,47 @@ class Counters {
   }
 
   /**
-   * Increase the specified counters by one for the current time interval.
+   * Increase the specified counters by one.
    */
-  public function increase($name, $counters): bool {
+  public function increase(
+    string $path,
+    array $counterNames,
+    DateTimeImmutable $date = null
+  ): bool {
     $sql = $this->database->sql();
-    $now = (new DateTime())->getTimestamp();
-    $time = self::getIntervalTime($now, $this->interval);
+    $date ??= new DateTimeImmutable();
+    $time = Interval::startOf($this->interval, $date)->getTimestamp();
 
-    // Add a new entry (if none exists already).
-    $this->addEntry($name, $time);
+    $this->addEntry($path, $time);
 
     $updates = array_map(function ($counter) use ($sql) {
       $identifier = $sql->columnName($this->tableName, $counter);
       return "$identifier = $identifier + 1";
-    }, $counters);
+    }, $counterNames);
 
     $updates = join(', ', $updates);
     $table = $sql->tableName($this->tableName);
-    $where = '"Name" = ? AND "Time" = ?';
+    $where = '"path" = ? AND "time" = ?';
     $query = "UPDATE $table SET $updates WHERE $where";
 
-    return $this->database->execute($query, [$name, $time]);
+    return $this->database->execute($query, [$path, $time]);
   }
 
-  public function select(
-    DateTime $from,
-    DateTime $to,
+  /**
+   * Get counter values from a specific time range and optionally only for a
+   * specific path.
+   */
+  public function data(
     int $interval,
-    string $name = null
-  ) {
-    $where = '"Time" BETWEEN ? AND ?';
+    DateTimeImmutable $from,
+    DateTimeImmutable $to,
+    string $path = null
+  ): array {
+    $where = '"time" BETWEEN ? AND ?';
     $bindings = [$from->getTimestamp(), $to->getTimestamp()];
-    if ($name) {
-      $where .= ' AND "Name" = ?';
-      $bindings[] = $name;
+    if ($path) {
+      $where .= ' AND "path" = ?';
+      $bindings[] = $path;
     }
 
     $select = $this->database->sql()->select([
@@ -128,17 +127,97 @@ class Counters {
 
     $rows = $this->database
       ->query($select['query'], $select['bindings'])
-      ->toArray(fn($el) => $el->toArray());
+      ->toArray(function ($row) {
+        $array = $row->toArray();
+        // Kirby doesn't automatically cast integer table columns so we have to
+        // do it manually.
+        foreach ($array as $key => $value) {
+          if ($key !== 'path') {
+            $array[$key] = intval($value);
+          }
+        }
+        return $array;
+      });
 
-    $data = new CountersData($rows, $this->counters);
-    return $data->groupByInterval($interval, $from, $to);
+    // Group the rows by time and path.
+    $data = $this->groupRows($rows, $interval);
+
+    // Add any missing intervals.
+    $period = new DatePeriod($from, Interval::interval($interval), $to);
+    foreach ($period as $time) {
+      $timeStamp = $time->getTimestamp();
+      $data[$timeStamp] ??= [
+        'time' => $timeStamp,
+        'label' => Interval::label($interval, $time),
+        'paths' => [],
+        'missing' => true,
+      ];
+    }
+
+    return $data;
   }
 
-  /**
-   * Get the time for the interval. For example, if the interval is hourly, the
-   * hour started for the time is returned.
-   */
-  static function getIntervalTime(int $time, int $interval) {
-    return $time - ($time % self::SECONDS_IN_INTERVAL[$interval]);
+  private function groupRows(array $rows, int $interval) {
+    $group = [];
+    $groupInterval = $interval;
+
+    foreach ($rows as $row) {
+      ['time' => $time, 'path' => $path, 'interval' => $interval] = $row;
+      $entries = [];
+
+      if ($interval === $groupInterval) {
+        // Intervals are matching, so we can simply add the row's counters.
+        $entries[$time] = $this->getCounters($row);
+      } elseif ($interval < $groupInterval) {
+        // Add the rows' counters to their corresponding group interval.
+        $time = Interval::startOf($groupInterval, $time)->getTimestamp();
+        $entries[$time] = $this->getCounters($row);
+      } elseif ($interval > $groupInterval) {
+        // Break up the row's counter values into multiple smaller intervals.
+        $start = Interval::startOf($interval, $time);
+        $end = Interval::endOf($interval, $time);
+        $periodInterval = Interval::interval($groupInterval);
+        $period = new DatePeriod($start, $periodInterval, $end);
+        $num = iterator_count($period);
+        $row = $this->divideCounters($this->getCounters($row), $num);
+        foreach ($period as $time) {
+          $entries[$time->getTimestamp()] = $row;
+        }
+      }
+
+      foreach ($entries as $time => $entry) {
+        $group[$time] ??= [
+          'time' => $time,
+          'label' => Interval::label($groupInterval, $time),
+          'paths' => [],
+        ];
+
+        $existingEntry = $group[$time]['paths'][$path] ?? null;
+        $group[$time]['paths'][$path] = $existingEntry
+          ? $this->sumCounters($existingEntry, $entry)
+          : $entry;
+      }
+    }
+
+    return $group;
+  }
+
+  private function getCounters(array $row): array {
+    return array_intersect_key($row, array_flip($this->counterNames));
+  }
+
+  private function divideCounters(array $counters, int $divisor): array {
+    foreach ($this->counterNames as $counter) {
+      $counters[$counter] = round(intval($counters[$counter]) / $divisor);
+    }
+    return $counters;
+  }
+
+  private function sumCounters(array $a, array $b) {
+    $result = A::merge([], $a);
+    foreach ($this->counterNames as $counter) {
+      $result[$counter] = intval($a[$counter]) + intval($b[$counter]);
+    }
+    return $result;
   }
 }

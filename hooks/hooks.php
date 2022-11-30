@@ -9,18 +9,18 @@ return [
       return;
     }
 
-    $ignore = option('arnoson.kirby-vite.ignore');
+    $ignore = option('arnoson.kirby-stats.ignore');
     if (is_callable($ignore) && $ignore($path, $method)) {
       return;
     }
 
-    $ignoreDirs = option('arnoson.kirby-vite.ignoreDirs', []);
+    $ignoreDirs = option('arnoson.kirby-stats.ignoreDirs', []);
     foreach ($ignoreDirs as $dir) {
       if ($path === $dir || Str::startsWith($path, "$dir/", true)) {
         return;
       }
     }
 
-    (new KirbyStats())->log("/$path");
+    (new KirbyStats())->handle("/$path");
   },
 ];

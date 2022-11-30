@@ -1,33 +1,54 @@
 <template>
-  <div class="k-stat k-stats-chart" ref="chart">
+  <div class="k-stat k-stats-chart">
+    <div class="k-stats-chart-chartist-container" ref="chart"></div>
     <!-- <pre>{{ JSON.stringify(stats, null, 2) }}</pre> -->
-    <dt class="k-stat-label">Visits</dt>
-    <dd class="k-stat-value">200</dd>
-    <dd class="k-stat-info">Info</dd>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
-import { Stats, Interval } from '../types'
-import { LineChart } from 'chartist'
+import { Label, LineChart } from 'chartist'
 import 'chartist/dist/index.css'
+import type { PropType } from 'vue'
+import { Interval, Stats } from '../types'
 
-export default defineComponent({
+export default {
   props: {
     stats: { type: Object as PropType<Stats>, required: true },
-    interval: { type: Number as PropType<Interval>, required: true },
+    interval: { type: String as PropType<Interval>, required: true },
     name: String,
   },
 
   chart: undefined as LineChart | undefined,
 
   computed: {
-    chartData() {
-      return Object.values(this.stats).map((v) => v.Visits)
-    },
-    chartLabels() {
-      return Object.values(this.stats).map((v) => v.Label)
+    data() {
+      const data = {
+        views: [] as (number | null)[],
+        visits: [] as (number | null)[],
+        labels: [] as string[],
+        totalViews: 0,
+        totalVisits: 0,
+      }
+
+      for (const { label, paths, missing } of Object.values(this.stats)) {
+        data.labels.push(label)
+        if (missing) {
+          data.views.push(null)
+          data.visits.push(null)
+          continue
+        }
+
+        const [views, visits] = Object.values(paths).reduce(
+          ([views, visits], path) => [views + path.views, visits + path.visits],
+          [0, 0]
+        )
+        data.views.push(views)
+        data.visits.push(visits)
+        data.totalViews += views
+        data.totalVisits += visits
+      }
+
+      return data
     },
   },
 
@@ -36,25 +57,29 @@ export default defineComponent({
     this.chart = new LineChart(
       // @ts-ignore
       this.$refs.chart,
-      { series: [this.chartData], labels: this.chartLabels },
+      { series: [this.data.visits], labels: this.data.labels },
       {
         low: 0,
         fullWidth: true,
         lineSmooth: false,
-        showArea: false,
+        showArea: true,
         showLine: true,
         chartPadding: { top: 0, left: 0, right: 0, bottom: 0 },
-        axisX: { showGrid: false },
+        axisX: {
+          showGrid: false,
+          labelInterpolationFnc: this.showMaxLabels(8),
+        },
         axisY: {
           labelInterpolationFnc: (v, i) => (i === 0 ? '' : v),
+          onlyInteger: true,
         },
       },
       [
         [
-          'screen and (max-width: 1300px)',
+          'screen and (max-width: 800px)',
           {
             axisX: {
-              labelInterpolationFnc: (v, i) => (i % 3 === 0 ? v : null),
+              labelInterpolationFnc: this.showMaxLabels(4),
             },
           },
         ],
@@ -63,51 +88,90 @@ export default defineComponent({
   },
 
   watch: {
-    chartData(data) {
+    data() {
       // @ts-ignore
       this.chart.update({
-        series: [this.chartData],
-        labels: this.chartLabels,
+        series: [this.data.views],
+        labels: this.data.labels,
       })
     },
   },
-})
+
+  methods: {
+    showMaxLabels(max: number) {
+      return (label: Label, index: number) => {
+        const { length } = this.data.labels
+        if (length <= max) return label
+        // Only show every n-th label/
+        const n = Math.round(length / max)
+        return index % n === 0 ? label : null
+      }
+    },
+  },
+}
 </script>
 
-<style>
-.k-stat.k-stats-chart {
-  height: 400px;
-  padding: 3rem 3rem 0 0.7rem;
-}
+<style lang="scss">
+.k-stats-chart {
+  &.k-stat {
+    padding: 0rem 3rem 0.3rem 0.7rem;
+  }
 
-.k-stats-chart svg {
-  overflow: visible;
-}
+  &-chartist-container {
+    padding-top: 2rem;
+    height: 400px;
+  }
 
-.ct-point {
-  display: none;
-}
+  &-count {
+    font-size: 1.25rem;
+    margin-bottom: var(--spacing-1);
+  }
 
-.ct-line {
-  stroke-width: 4px;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
+  &-label {
+    font-size: var(--text-xs);
+  }
 
-.ct-label.ct-vertical.ct-start,
-.ct-label.ct-vertical.ct-end {
-  transform: translateY(50%);
-  align-items: center;
-}
+  k-button.active {
+    color: blue;
+  }
 
-.ct-label.ct-horizontal.ct-start,
-.ct-label.ct-horizontal.ct-end {
-  white-space: nowrap;
-  transform: translateX(-50%);
-  justify-content: center;
-}
+  svg {
+    overflow: visible;
+  }
 
-.ct-label.ct-horizontal {
-  margin-top: 0.2rem;
+  .ct-point {
+    stroke-width: 6px;
+    stroke: var(--color-blue);
+  }
+
+  .ct-line {
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke: var(--color-blue);
+  }
+
+  .ct-area {
+    // Fill and opacity match `--color-blue-200`.
+    fill: var(--color-blue);
+    fill-opacity: 0.29;
+  }
+
+  .ct-label.ct-vertical.ct-start,
+  .ct-label.ct-vertical.ct-end {
+    transform: translateY(50%);
+    align-items: center;
+  }
+
+  .ct-label.ct-horizontal.ct-start,
+  .ct-label.ct-horizontal.ct-end {
+    white-space: nowrap;
+    transform: translateX(-50%);
+    justify-content: center;
+  }
+
+  .ct-label.ct-horizontal {
+    margin-top: 0.2rem;
+  }
 }
 </style>

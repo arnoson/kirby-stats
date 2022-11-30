@@ -1,10 +1,10 @@
 export const browsers = [
+  'Firefox',
+  'Chrome',
   'Opera',
   'Edge',
-  'InternetExplorer',
-  'Firefox',
   'Safari',
-  'Chrome',
+  'InternetExplorer',
 ] as const
 
 export const os = ['Windows', 'Apple', 'Linux', 'Android', 'iOS'] as const
@@ -13,19 +13,15 @@ export type Browser = typeof browsers[number]
 
 export type OS = typeof os[number]
 
-export enum Interval {
-  'hourly',
-  'daily',
-  'weekly',
-  'monthly',
-  'yearly',
-}
+export type StatsCounters = Record<'views' | 'visits' | Browser | OS, number>
+
+export type Interval = 'hour' | 'day' | 'week' | 'month' | 'year'
 
 export type StatsEntry = {
-  Time: number
-  Interval: Interval
-  Name: string
-  Synthetic?: boolean
-} & Record<'Views' | 'Visits' | Browser | OS, number>
+  time: number
+  label: string
+  missing?: boolean
+  paths: Record<string, StatsCounters>
+}
 
-export type Stats = Record<StatsEntry['Time'], StatsEntry>
+export type Stats = Record<StatsEntry['time'], StatsEntry>

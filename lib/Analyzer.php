@@ -20,6 +20,7 @@ class Analyzer {
     $browser = new Browser($this->userAgent());
 
     return [
+      'bot' => $browser->isRobot(),
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
       'referrer' =>
