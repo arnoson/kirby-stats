@@ -2,7 +2,7 @@
   <k-table
     :index="false"
     :columns="{
-      name: { label: 'Page', type: 'stats-percent', mobile: true },
+      name: { label: 'Page', type: 'stats-page', mobile: true },
       visits: { label: 'Visits', width: '8em', mobile: true },
     }"
     :rows="data"
@@ -12,10 +12,12 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { Stats } from '../types'
+import { slugifyPath } from '../utils'
 
 export default {
   props: {
     stats: { type: Object as PropType<Stats>, required: true },
+    urls: { type: Object as PropType<Record<string, string>>, required: true },
   },
 
   computed: {
@@ -23,14 +25,16 @@ export default {
       let totalVisits = 0
       const data = {} as Record<
         string,
-        { name: string; visits: number; percent: number }
+        { name: string; visits: number; percent: number; url: string }
       >
 
       for (const { paths, missing } of Object.values(this.stats)) {
         if (missing) continue
         for (const [path, { counters, title }] of Object.entries(paths)) {
           const name = title || path
-          data[path] ??= { name, visits: 0, percent: 0 }
+          const slug = slugifyPath(path)
+          const url = this.urls.page.replace('{{slug}}', slug)
+          data[path] ??= { name, visits: 0, percent: 0, url }
           data[path].visits += counters.visits
           totalVisits += counters.visits
         }

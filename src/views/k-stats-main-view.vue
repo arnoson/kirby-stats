@@ -2,7 +2,7 @@
   <k-inside>
     <k-view class="k-stats-main-view">
       <k-header>
-        Stats {{ page ? `/${page}` : '' }}
+        Stats {{ page ? ` for ${labels.page}` : '' }}
         <template #left>
           <k-button-group>
             <k-button icon="cog">Settings</k-button>
@@ -11,43 +11,43 @@
         <template #right>
           <k-button-group>
             <k-button-link
-              :link="urls.lastInterval"
+              :link="urls.last"
               icon="angle-left"
-              :disabled="!urls.lastInterval"
+              :disabled="!urls.last"
             />
             <k-dropdown>
-              <k-button @click="toggleIntervalSelect" icon="calendar">{{
-                dateLabel
-              }}</k-button>
-              <k-dropdown-content ref="periodSelect">
-                <k-dropdown-item @click="selectRange('today')"
-                  >Today</k-dropdown-item
-                >
-                <k-dropdown-item @click="selectRange('7-days')"
-                  >Last 7 days</k-dropdown-item
-                >
-                <k-dropdown-item @click="selectRange('30-days')"
-                  >Last 30 days</k-dropdown-item
-                >
+              <k-button @click="toggleIntervalSelect" icon="calendar">
+                {{ labels.date }}
+              </k-button>
+              <k-dropdown-content ref="intervalSelect">
+                <k-button-link class="k-dropdown-item" :link="urls.today">
+                  Today
+                </k-button-link>
+                <k-button-link class="k-dropdown-item" :link="urls['7-days']">
+                  Last 7 days
+                </k-button-link>
+                <k-button-link class="k-dropdown-item" :link="urls['30-days']">
+                  Last 30 days
+                </k-button-link>
                 <hr />
-                <k-dropdown-item @click="selectInterval('day')"
-                  >Day</k-dropdown-item
-                >
-                <k-dropdown-item @click="selectInterval('week')"
-                  >Week</k-dropdown-item
-                >
-                <k-dropdown-item @click="selectInterval('month')"
-                  >Month</k-dropdown-item
-                >
-                <k-dropdown-item @click="selectInterval('year')"
-                  >Year</k-dropdown-item
-                >
+                <k-button-link class="k-dropdown-item" :link="urls.day">
+                  Day
+                </k-button-link>
+                <k-button-link class="k-dropdown-item" :link="urls.week">
+                  Week
+                </k-button-link>
+                <k-button-link class="k-dropdown-item" :link="urls.month">
+                  Month
+                </k-button-link>
+                <k-button-link class="k-dropdown-item" :link="urls.year">
+                  Year
+                </k-button-link>
               </k-dropdown-content>
             </k-dropdown>
             <k-button-link
               icon="angle-right"
-              :link="urls.nextInterval"
-              :disabled="!urls.nextInterval"
+              :link="urls.next"
+              :disabled="!urls.next"
             />
           </k-button-group>
         </template>
@@ -78,7 +78,7 @@
             <header class="k-section-header">
               <k-headline>Pages</k-headline>
             </header>
-            <k-stats-pages :stats="stats" />
+            <k-stats-pages :stats="stats" :urls="urls" />
           </section>
         </k-column>
       </k-grid>
@@ -87,32 +87,30 @@
 </template>
 
 <script lang="ts">
-import { Interval } from '../types'
+import type { PropType } from 'vue'
+import { Stats } from '../types'
 
 export default {
   props: {
-    stats: Array,
+    stats: {
+      type: Object as PropType<Stats>,
+      required: true,
+    },
+    urls: {
+      type: Object as PropType<Record<string, string>>,
+      required: true,
+    },
+    labels: {
+      type: Object as PropType<Record<string, string>>,
+      required: true,
+    },
     page: String,
-    from: String,
-    to: String,
-    urls: { type: Array, required: true },
-    dateLabel: String,
   },
 
   methods: {
-    selectRange(range: 'today' | '7-days' | '30-days') {
-      // @ts-ignore
-      this.$go(`stats/${range}`)
-    },
-
-    selectInterval(interval: Interval) {
-      // @ts-ignore
-      this.$go(this.urls[`${interval}Interval`])
-    },
-
     toggleIntervalSelect() {
       // @ts-ignore
-      this.$refs.periodSelect?.toggle()
+      this.$refs.intervalSelect?.toggle()
     },
   },
 }

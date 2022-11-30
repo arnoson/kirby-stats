@@ -4,49 +4,75 @@ namespace arnoson\KirbyStats;
 use DateTimeImmutable;
 use Kirby\Toolkit\A;
 
-function urls() {
-  $now = new DateTimeImmutable();
-  $urls = [];
-  foreach (['day', 'week', 'month', 'year'] as $name) {
-    $slug = Interval::slug(Interval::fromName($name), $now);
-    $urls[$name . 'Interval'] = "stats/$name/$slug";
+function path(string $slug = null) {
+  if (!$slug) {
+    return;
   }
-  return $urls;
+  $path = str_replace('+', '/', $slug);
+  return $path === 'home' ? '/' : $path;
 }
 
-function statsViewLatest(string $range, string $page = null) {
-  $to = (new DateTimeImmutable())->modify('tomorrow');
+function statsView(array $data) {
+  $now = new DateTimeImmutable();
+  $page = $data['page'] ?? null;
+  $labels = ['page' => Helpers::pathTitle($page)];
+  $urls = [];
 
-  [$modifier, $label, $dataInterval] = match ($range) {
-    'today' => ['-1 day', 'Today', Interval::HOUR],
-    '7-days' => ['-7 days', 'Last 7 days', Interval::DAY],
-    '30-days' => ['-30 days', 'Last 30 days', Interval::DAY],
-  };
+  foreach (['day', 'week', 'month', 'year'] as $name) {
+    $slug = Interval::slug(Interval::fromName($name), $now);
+    $urls[$name] = "stats/$name/$slug" . ($page ? "/page/$page" : '');
+  }
 
-  $from = $to->modify($modifier);
-  $page = $page ? "/$page" : null;
+  foreach (['today', '7-days', '30-days'] as $name) {
+    $urls[$name] = "stats/$name" . ($page ? "/page/$page" : '');
+  }
 
   return [
     'component' => 'k-stats-main-view',
     'props' => [
-      'stats' => (new KirbyStats())->data($dataInterval, $from, $to, $page),
+      'stats' => $data['stats'],
+      'labels' => A::merge($labels, $data['labels']),
+      'urls' => A::merge($urls, $data['urls']),
       'page' => $page,
-      'dateLabel' => $label,
-      'urls' => urls(),
     ],
   ];
 }
 
-function statsViewInterval(int $interval, DateTimeImmutable $date) {
+function statsViewLatest(string $range, string $page = null) {
+  $to = (new DateTimeImmutable())->modify('tomorrow');
+  [$modifier, $label, $interval] = match ($range) {
+    'today' => ['-1 day', 'Today', Interval::HOUR],
+    '7-days' => ['-7 days', 'Last 7 days', Interval::DAY],
+    '30-days' => ['-30 days', 'Last 30 days', Interval::DAY],
+  };
+  $from = $to->modify($modifier);
+
+  return statsView([
+    'stats' => (new KirbyStats())->data($interval, $from, $to, path($page)),
+    'page' => "stats/$range/page/{{slug}}",
+    'urls' => ['page' => "stats/$range/page/{{slug}}"],
+    'labels' => ['date' => $label],
+    'page' => $page,
+  ]);
+}
+
+function statsViewInterval(
+  int $interval,
+  DateTimeImmutable $date,
+  $page = null
+) {
   $now = new DateTimeImmutable();
   $current = Interval::startOf($interval, $date);
   $last = Interval::startOfLast($interval, $date);
   $next = Interval::startOfNext($interval, $date);
+
   $hasNext = $next < $now;
   $format = $interval === 'month' ? 'Y-m' : 'Y-m-d';
+  $path = $page ? ($page === 'home' ? '/' : "/$page") : null;
 
-  $from = Interval::startOf($interval, $date);
+  $from = $current;
   $to = Interval::endOf($interval, $date);
+
   $intervalName = Interval::name($interval);
   $dataInterval = match ($interval) {
     Interval::DAY => Interval::HOUR,
@@ -54,19 +80,17 @@ function statsViewInterval(int $interval, DateTimeImmutable $date) {
     default => Interval::DAY,
   };
 
-  return [
-    'component' => 'k-stats-main-view',
-    'props' => [
-      'urls' => A::merge(urls(), [
-        'lastInterval' => "stats/$intervalName/{$last->format($format)}",
-        'nextInterval' => $hasNext
-          ? "stats/$intervalName/{$next->format($format)}"
-          : null,
-      ]),
-      'stats' => (new KirbyStats())->data($dataInterval, $from, $to),
-      'dateLabel' => Interval::label($interval, $current),
+  return statsView([
+    'stats' => (new KirbyStats())->data($dataInterval, $from, $to, $path),
+    'labels' => ['date' => Interval::label($interval, $current)],
+    'urls' => [
+      'page' => "stats/$intervalName/{$current->format($format)}/page/{{slug}}",
+      'last' => "stats/$intervalName/{$last->format($format)}",
+      'next' => $hasNext
+        ? "stats/$intervalName/{$next->format($format)}"
+        : null,
     ],
-  ];
+  ]);
 }
 
 return fn() => [
@@ -80,8 +104,20 @@ return fn() => [
       'action' => fn() => statsViewLatest('today'),
     ],
     [
+      'pattern' => 'stats/(:any)/page/(:any)',
+      'action' => fn($range, $page) => statsViewLatest($range, $page),
+    ],
+    [
       'pattern' => 'stats/(:any)',
       'action' => fn($range) => statsViewLatest($range),
+    ],
+    [
+      'pattern' => 'stats/(:any)/(:any)/page/(:any)',
+      'action' => fn($interval, $date, $page) => statsViewInterval(
+        Interval::fromName($interval),
+        new DateTimeImmutable($date),
+        $page
+      ),
     ],
     [
       'pattern' => 'stats/(:any)/(:any)',
@@ -89,10 +125,6 @@ return fn() => [
         Interval::fromName($interval),
         new DateTimeImmutable($date)
       ),
-    ],
-    [
-      'pattern' => 'stats/page/(:any)/(:any)',
-      'action' => fn($page, $range) => statsViewLatest($range, $page),
     ],
   ],
 ];

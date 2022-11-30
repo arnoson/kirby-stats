@@ -200,21 +200,11 @@ class Counters {
             'title' => $existing['title'],
             'counters' => $this->sumCounters($existing['counters'], $counters),
           ]
-          : ['title' => $this->pathTitle($path), 'counters' => $counters];
+          : ['title' => Helpers::pathTitle($path), 'counters' => $counters];
       }
     }
 
     return $group;
-  }
-
-  private function pathTitle(string $path) {
-    if ($page = page($path)) {
-      $parts = [$page->title()->value()];
-      while ($page = $page->parent()) {
-        $parts[] = $page->title()->value();
-      }
-      return implode(' / ', array_reverse($parts));
-    }
   }
 
   private function getCounters(array $row): array {
