@@ -62,11 +62,12 @@ class KirbyStats {
   }
 
   public function data(
+    int $interval,
     DateTimeImmutable $from,
     DateTimeImmutable $to,
-    int $interval
+    string $path = null
   ): array {
-    return $this->stats->data($interval, $from, $to);
+    return $this->stats->data($interval, $from, $to, $path);
   }
 
   public function remove(): bool {

@@ -2,7 +2,7 @@
   <k-table
     :index="false"
     :columns="{
-      path: { label: 'Page', type: 'stats-percent', mobile: true },
+      name: { label: 'Page', type: 'stats-percent', mobile: true },
       visits: { label: 'Visits', width: '8em', mobile: true },
     }"
     :rows="data"
@@ -23,15 +23,16 @@ export default {
       let totalVisits = 0
       const data = {} as Record<
         string,
-        { path: string; visits: number; percent: number }
+        { name: string; visits: number; percent: number }
       >
 
       for (const { paths, missing } of Object.values(this.stats)) {
         if (missing) continue
-        for (const [path, { visits }] of Object.entries(paths)) {
-          data[path] ??= { path, visits: 0, percent: 0 }
-          data[path].visits += visits
-          totalVisits += visits
+        for (const [path, { counters, title }] of Object.entries(paths)) {
+          const name = title || path
+          data[path] ??= { name, visits: 0, percent: 0 }
+          data[path].visits += counters.visits
+          totalVisits += counters.visits
         }
       }
 

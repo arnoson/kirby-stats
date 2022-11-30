@@ -29,7 +29,7 @@ export default {
 
       for (const { paths, missing } of Object.values(this.stats)) {
         if (missing) continue
-        for (const counters of Object.values(paths)) {
+        for (const { counters } of Object.values(paths)) {
           for (const name of os) {
             data[name] ??= { name, visits: 0, percent: 0 }
             data[name].visits += counters[name]

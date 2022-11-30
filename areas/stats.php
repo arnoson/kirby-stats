@@ -14,7 +14,7 @@ function urls() {
   return $urls;
 }
 
-function statsViewLatest(string $range) {
+function statsViewLatest(string $range, string $page = null) {
   $to = (new DateTimeImmutable())->modify('tomorrow');
 
   [$modifier, $label, $dataInterval] = match ($range) {
@@ -24,11 +24,13 @@ function statsViewLatest(string $range) {
   };
 
   $from = $to->modify($modifier);
+  $page = $page ? "/$page" : null;
 
   return [
     'component' => 'k-stats-main-view',
     'props' => [
-      'stats' => (new KirbyStats())->data($from, $to, $dataInterval),
+      'stats' => (new KirbyStats())->data($dataInterval, $from, $to, $page),
+      'page' => $page,
       'dateLabel' => $label,
       'urls' => urls(),
     ],
@@ -61,7 +63,7 @@ function statsViewInterval(int $interval, DateTimeImmutable $date) {
           ? "stats/$intervalName/{$next->format($format)}"
           : null,
       ]),
-      'stats' => (new KirbyStats())->data($from, $to, $dataInterval),
+      'stats' => (new KirbyStats())->data($dataInterval, $from, $to),
       'dateLabel' => Interval::label($interval, $current),
     ],
   ];
@@ -87,6 +89,10 @@ return fn() => [
         Interval::fromName($interval),
         new DateTimeImmutable($date)
       ),
+    ],
+    [
+      'pattern' => 'stats/page/(:any)/(:any)',
+      'action' => fn($page, $range) => statsViewLatest($range, $page),
     ],
   ],
 ];

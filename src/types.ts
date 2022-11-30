@@ -21,7 +21,7 @@ export type StatsEntry = {
   time: number
   label: string
   missing?: boolean
-  paths: Record<string, StatsCounters>
+  paths: Record<string, { title: string; counters: StatsCounters }>
 }
 
 export type Stats = Record<StatsEntry['time'], StatsEntry>

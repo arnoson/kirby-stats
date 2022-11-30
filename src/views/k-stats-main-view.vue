@@ -2,7 +2,7 @@
   <k-inside>
     <k-view class="k-stats-main-view">
       <k-header>
-        Stats
+        Stats {{ page ? `/${page}` : '' }}
         <template #left>
           <k-button-group>
             <k-button icon="cog">Settings</k-button>
@@ -92,6 +92,7 @@ import { Interval } from '../types'
 export default {
   props: {
     stats: Array,
+    page: String,
     from: String,
     to: String,
     urls: { type: Array, required: true },

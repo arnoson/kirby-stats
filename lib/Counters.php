@@ -163,15 +163,15 @@ class Counters {
 
     foreach ($rows as $row) {
       ['time' => $time, 'path' => $path, 'interval' => $interval] = $row;
-      $entries = [];
+      $countersByInterval = [];
 
       if ($interval === $groupInterval) {
         // Intervals are matching, so we can simply add the row's counters.
-        $entries[$time] = $this->getCounters($row);
+        $countersByInterval[$time] = $this->getCounters($row);
       } elseif ($interval < $groupInterval) {
         // Add the rows' counters to their corresponding group interval.
         $time = Interval::startOf($groupInterval, $time)->getTimestamp();
-        $entries[$time] = $this->getCounters($row);
+        $countersByInterval[$time] = $this->getCounters($row);
       } elseif ($interval > $groupInterval) {
         // Break up the row's counter values into multiple smaller intervals.
         $start = Interval::startOf($interval, $time);
@@ -181,25 +181,40 @@ class Counters {
         $num = iterator_count($period);
         $row = $this->divideCounters($this->getCounters($row), $num);
         foreach ($period as $time) {
-          $entries[$time->getTimestamp()] = $row;
+          $countersByInterval[$time->getTimestamp()] = $row;
         }
       }
 
-      foreach ($entries as $time => $entry) {
+      foreach ($countersByInterval as $time => $counters) {
         $group[$time] ??= [
           'time' => $time,
           'label' => Interval::label($groupInterval, $time),
           'paths' => [],
         ];
 
-        $existingEntry = $group[$time]['paths'][$path] ?? null;
-        $group[$time]['paths'][$path] = $existingEntry
-          ? $this->sumCounters($existingEntry, $entry)
-          : $entry;
+        $path = $path === '/' ? '/home' : $path;
+        $existing = $group[$time]['paths'][$path] ?? null;
+
+        $group[$time]['paths'][$path] = $existing
+          ? [
+            'title' => $existing['title'],
+            'counters' => $this->sumCounters($existing['counters'], $counters),
+          ]
+          : ['title' => $this->pathTitle($path), 'counters' => $counters];
       }
     }
 
     return $group;
+  }
+
+  private function pathTitle(string $path) {
+    if ($page = page($path)) {
+      $parts = [$page->title()->value()];
+      while ($page = $page->parent()) {
+        $parts[] = $page->title()->value();
+      }
+      return implode(' / ', array_reverse($parts));
+    }
   }
 
   private function getCounters(array $row): array {

@@ -33,13 +33,16 @@ export default {
       for (const { label, paths, missing } of Object.values(this.stats)) {
         data.labels.push(label)
         if (missing) {
-          data.views.push(null)
-          data.visits.push(null)
+          data.views.push(0)
+          data.visits.push(0)
           continue
         }
 
         const [views, visits] = Object.values(paths).reduce(
-          ([views, visits], path) => [views + path.views, visits + path.visits],
+          ([views, visits], { counters }) => [
+            views + counters.views,
+            visits + counters.visits,
+          ],
           [0, 0]
         )
         data.views.push(views)
