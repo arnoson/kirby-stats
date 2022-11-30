@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "target": "Esnext",
+    "module": "ESNext",
     "moduleResolution": "node"
   },
   "vueCompilerOptions": {
