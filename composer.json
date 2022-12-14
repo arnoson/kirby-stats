@@ -2,6 +2,7 @@
   "name": "arnoson/kirby-stats",
   "description": "Simple and privacy friendly web statistics for Kirby CMS.",
   "type": "kirby-plugin",
+  "version": "0.0.1",
   "autoload": {
     "psr-4": {
       "arnoson\\KirbyStats\\": "lib"
@@ -14,8 +15,7 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "arnoson",
-      "email": "omasocke@hotmail.de"
+      "name": "Arno Schlipf"
     }
   ],
   "require-dev": {
