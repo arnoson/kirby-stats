@@ -1,21 +1,15 @@
 # Kirby Stats
 
-> :warning: This plugin is still in beta, a lot of fine-tuning still missing.
+> :warning: This plugin is still in alpha, a lot of features are still missing or not completed yet.
 
 Kirby stats is a simple, privacy friendly Kirby 3 plugin for tracking page views and visits.
 
 <img alt="Kirby Stats Panel Screenshot" src="assets/kirby-stats-screenshot.png" width="700">
 
-## Installation
-
-```sh
-composer require arnoson/kirby-stats
-```
-
 ## Note
 
 I'm no lawyer and can't give you any legal advice regarding GDPR. I can only tell you what data the plugin is collecting.
-For each page view a various counters are increased for a specified time interval. For example, after the first user has visited your website the data would be:
+For each page view various counters are increased for a specified time interval. For example, after the first user has visited your website the data would be:
 
 | path | time          | views | visits | Firefox | Windows |
 | :--- | :------------ | :---- | :----- | :------ | :------ |
@@ -31,6 +25,12 @@ For each page view a various counters are increased for a specified time interva
 That's it. No IP address is stored and no cookie is set by this plugin. And also no unique requests, all data is grouped into time intervals. If a second user visits in the same hour, the counters are increased accordingly. If a user visits in the following hour or later a new row of counters is created in the table.
 
 Please checkout the source code and decide for yourself what this means for your privacy statement and GDPR.
+
+## Installation
+
+```sh
+composer require arnoson/kirby-stats
+```
 
 ## Usage
 
