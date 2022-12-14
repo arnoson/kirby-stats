@@ -35,6 +35,10 @@ class KirbyStats {
   }
 
   public function handle($path, DateTimeImmutable $date = null) {
+    if (kirby()->user()) {
+      return;
+    }
+
     $analysis = (new Analyzer())->analyze();
     if ($analysis['bot'] || !$analysis['view'] || !$analysis['visit']) {
       return;
