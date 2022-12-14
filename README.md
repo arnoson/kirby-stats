@@ -18,7 +18,7 @@ For each page view various counters are increased for a specified time interval.
 - `path` is the url path
 - `unixtimestamp` is the time of the interval you choose to track. For example if you track hourly, the `unixtimestamp` would be the beginning of the current hour.
 - `views` will increase for each page view, except reloads
-- `visit` will only increase if a user visits your website either from a blank tab or via a link from another website. To determine if a request counts as a visit, the user's referrer is checked (but not saved). This also means that these aren't unique visits like many other tracking plugins. If the same person visits your website two times in day you will see two visits.
+- `visit` will only increase if a user visits your website either from a blank tab or via a link from another website. To determine if a request counts as a visit, the user's referrer is checked (but not saved). This also means that these aren't unique visits like in many other tracking plugins. If the same person visits your website two times in a day you will see two visits.
 - `Firefox`, `Opera`, `Edge`, `InternetExplorer`, `Safari` or `Chrome` will be increased for each visit depending on the user's browser (the user agent is used to determine this).
 - `Windows`, `Apple`, `Linux`, `Android`, `iOS` will be increased for each visit depending on the users's operating system (the user agent is used to determine this).
 
