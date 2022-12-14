@@ -38,5 +38,6 @@ See the `/example` folder, documentation coming soon.
 
 # Credits
 
+- https://github.com/cbschuld/Browser.php
 - https://github.com/FabianSperrle/kirby-stats
 - https://github.com/Daandelange/kirby3-simplestats
