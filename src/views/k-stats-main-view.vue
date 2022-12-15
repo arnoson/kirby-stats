@@ -54,11 +54,26 @@
       </k-header>
       <section class="k-section">
         <header class="k-section-header">
-          <k-button>
-            <k-headline>Visits / Views</k-headline>
-          </k-button>
+          <k-headline>
+            <button
+              class="k-stats-type-button"
+              :class="{ active: type === 'views' }"
+              @click="type = 'views'"
+            >
+              <span class="k-stats-type-display">Views</span>
+              <span class="k-stats-type-width">Views</span>
+            </button>
+            /
+            <button
+              class="k-stats-type-button"
+              :class="{ active: type === 'visits' }"
+              @click="type = 'visits'"
+            >
+              Visits
+            </button>
+          </k-headline>
         </header>
-        <k-stats-chart :stats="stats" />
+        <k-stats-chart :stats="stats" :type="type" :page="labels.page" />
       </section>
 
       <k-grid gutter="medium">
@@ -78,7 +93,7 @@
             <header class="k-section-header">
               <k-headline>Pages</k-headline>
             </header>
-            <k-stats-pages :stats="stats" :urls="urls" />
+            <k-stats-pages :stats="stats" :urls="urls" :type="type" />
           </section>
         </k-column>
       </k-grid>
@@ -107,6 +122,12 @@ export default {
     page: String,
   },
 
+  data() {
+    return {
+      type: 'views' as 'views' | 'visits',
+    }
+  },
+
   methods: {
     toggleIntervalSelect() {
       // @ts-ignore
@@ -132,6 +153,34 @@ export default {
     tr th:nth-child(2) {
       text-align: center;
     }
+  }
+}
+
+.k-stats {
+  &-type-button {
+    position: relative;
+
+    // Adjust the letter-spacing to roughly match the bold weight.
+    letter-spacing: 0.3px;
+
+    &:not(.active):not(:hover) {
+      color: var(--color-gray-600);
+    }
+    &.active {
+      font-weight: var(--font-bold);
+      letter-spacing: 0;
+    }
+  }
+
+  // Make sure the buttons always takes up the same space by adding an invisible
+  // bold version to avoid layout shift.
+  &-type-display {
+    position: absolute;
+  }
+  &-type-width {
+    visibility: hidden;
+    letter-spacing: 0;
+    font-weight: var(--font-bold);
   }
 }
 </style>

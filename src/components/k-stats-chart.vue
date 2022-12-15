@@ -14,6 +14,7 @@ import { Interval, Stats } from '../types'
 export default {
   props: {
     stats: { type: Object as PropType<Stats>, required: true },
+    type: { type: String, required: true },
     interval: { type: String as PropType<Interval>, required: true },
     name: String,
   },
@@ -60,7 +61,10 @@ export default {
     this.chart = new LineChart(
       // @ts-ignore
       this.$refs.chart,
-      { series: [this.data.visits], labels: this.data.labels },
+      {
+        series: [this.type === 'views' ? this.data.views : this.data.visits],
+        labels: this.data.labels,
+      },
       {
         low: 0,
         fullWidth: true,
@@ -92,15 +96,22 @@ export default {
 
   watch: {
     data() {
-      // @ts-ignore
-      this.chart.update({
-        series: [this.data.views],
-        labels: this.data.labels,
-      })
+      this.updateChart()
+    },
+    type() {
+      this.updateChart()
     },
   },
 
   methods: {
+    updateChart() {
+      // @ts-ignore
+      this.chart.update({
+        series: [this.type === 'views' ? this.data.views : this.data.visits],
+        labels: this.data.labels,
+      })
+    },
+
     showMaxLabels(max: number) {
       return (label: Label, index: number) => {
         const { length } = this.data.labels
