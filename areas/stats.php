@@ -9,7 +9,7 @@ function path(string $slug = null) {
     return;
   }
   $path = str_replace('+', '/', $slug);
-  return $path === 'home' ? '/' : $path;
+  return $path === 'home' ? '/' : "/$path";
 }
 
 function statsView(array $data) {
