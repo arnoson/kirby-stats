@@ -41,7 +41,7 @@ export default {
       return Object.values(data)
         .map((v) => ({
           ...v,
-          percent: (v.visits / totalVisits) * 100,
+          percent: totalVisits ? (v.visits / totalVisits) * 100 : 0,
         }))
         .sort((a, b) => b.percent - a.percent)
     },
