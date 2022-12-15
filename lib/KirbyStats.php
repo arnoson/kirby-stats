@@ -5,8 +5,6 @@ namespace arnoson\KirbyStats;
 use DateTimeImmutable;
 use Kirby\Database\Database;
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
 class KirbyStats {
   protected Counters $stats;
 
@@ -40,7 +38,8 @@ class KirbyStats {
     }
 
     $analysis = (new Analyzer())->analyze();
-    if ($analysis['bot'] || !$analysis['view'] || !$analysis['visit']) {
+    dump($analysis);
+    if ($analysis['bot'] || !($analysis['view'] || $analysis['visit'])) {
       return;
     }
 
