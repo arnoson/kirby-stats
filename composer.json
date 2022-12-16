@@ -10,7 +10,8 @@
   },
   "require": {
     "getkirby/composer-installer": "^1.2",
-    "cbschuld/browser.php": "^1.9"
+    "cbschuld/browser.php": "^1.9",
+    "jaybizzle/crawler-detect": "^1.2"
   },
   "license": "MIT",
   "authors": [

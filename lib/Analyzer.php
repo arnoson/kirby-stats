@@ -3,6 +3,7 @@
 namespace arnoson\KirbyStats;
 
 use Browser;
+use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
 class Analyzer {
   protected $host;
@@ -20,7 +21,7 @@ class Analyzer {
     $browser = new Browser($this->userAgent());
 
     return [
-      'bot' => $browser->isRobot(),
+      'bot' => (new CrawlerDetect())->isCrawler($this->userAgent()),
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
       'referrer' =>
