@@ -2,8 +2,10 @@
 
 namespace arnoson\KirbyStats;
 
+use DateTime;
 use DateTimeImmutable;
 use Kirby\Database\Database;
+use Kirby\Filesystem\F;
 
 class KirbyStats {
   protected Counters $stats;
@@ -33,12 +35,16 @@ class KirbyStats {
   }
 
   public function handle($path, DateTimeImmutable $date = null) {
+    $debug = option('arnoson.kirby-stats.debug');
+    if ($debug) {
+      $startTime = microtime(true);
+    }
+
     if (kirby()->user()) {
       return;
     }
 
     $analysis = (new Analyzer())->analyze();
-    dump($analysis);
     if ($analysis['bot'] || !($analysis['view'] || $analysis['visit'])) {
       return;
     }
@@ -62,6 +68,16 @@ class KirbyStats {
     }
 
     $this->stats->increase($path, $counters, $date);
+
+    if ($debug) {
+      $duration = microtime(true) - $startTime . 'μs';
+      $agent = $_SERVER['HTTP_USER_AGENT'];
+      $time = (new DateTime())->format('Y-m-d H:i:s');
+      F::append(
+        kirby()->root('base') . '/stats-log.txt',
+        "[$time] $duration $path $agent\n"
+      );
+    }
   }
 
   public function data(
