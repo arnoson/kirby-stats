@@ -88,6 +88,10 @@ class KirbyStats {
     return $this->stats->data($interval, $from, $to, $path);
   }
 
+  public function getFirstTime() {
+    return $this->stats->getFirstTime();
+  }
+
   public function remove(): bool {
     return $this->stats->remove();
   }

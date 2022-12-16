@@ -47,6 +47,12 @@ function statsViewLatest(string $range, string $page = null) {
   };
   $from = $to->modify($modifier);
 
+  if ($range === 'today') {
+    // Overwrite statsViewInterval's date label.
+    $labels = ['date' => $label];
+    return statsViewInterval(Interval::DAY, $from, null, $labels);
+  }
+
   return statsView([
     'stats' => (new KirbyStats())->data($interval, $from, $to, path($page)),
     'page' => "stats/$range/page/{{slug}}",
@@ -59,13 +65,16 @@ function statsViewLatest(string $range, string $page = null) {
 function statsViewInterval(
   int $interval,
   DateTimeImmutable $date,
-  $page = null
+  $page = null,
+  $labels = []
 ) {
+  $stats = new KirbyStats();
   $now = new DateTimeImmutable();
   $current = Interval::startOf($interval, $date);
   $last = Interval::startOfLast($interval, $date);
   $next = Interval::startOfNext($interval, $date);
 
+  $hasLast = $date > $stats->getFirstTime();
   $hasNext = $next < $now;
   $format = $interval === 'month' ? 'Y-m' : 'Y-m-d';
   $path = $page ? ($page === 'home' ? '/' : "/$page") : null;
@@ -81,11 +90,16 @@ function statsViewInterval(
   };
 
   return statsView([
-    'stats' => (new KirbyStats())->data($dataInterval, $from, $to, $path),
-    'labels' => ['date' => Interval::label($interval, $current)],
+    'stats' => $stats->data($dataInterval, $from, $to, $path),
+    'labels' => A::merge(
+      ['date' => Interval::label($interval, $current)],
+      $labels
+    ),
     'urls' => [
       'page' => "stats/$intervalName/{$current->format($format)}/page/{{slug}}",
-      'last' => "stats/$intervalName/{$last->format($format)}",
+      'last' => $hasLast
+        ? "stats/$intervalName/{$last->format($format)}"
+        : null,
       'next' => $hasNext
         ? "stats/$intervalName/{$next->format($format)}"
         : null,

@@ -157,7 +157,7 @@ class Counters {
 
       // If the time is before the earliest entry or in the future we consider
       // it as missing. Otherwise it would just represent empty data.
-      $missing = $timeStamp < $firstTime || $timeStamp > $now->getTimestamp();
+      $missing = $time < $firstTime || $time > $now;
 
       $data[$timeStamp] ??= [
         'time' => $timeStamp,
@@ -224,11 +224,12 @@ class Counters {
     return $group;
   }
 
-  function getFirstTime() {
+  function getFirstTime(): DateTimeImmutable {
     $tableName = $this->database->sql()->quoteIdentifier($this->tableName);
     $query = "SELECT time FROM $tableName ORDER BY time ASC LIMIT 1";
     $rows = $this->database->query($query);
-    return $rows->isEmpty() ? 0 : intval($rows->first()->time());
+    $timeStamp = $rows->isEmpty() ? 0 : intval($rows->first()->time());
+    return (new DateTimeImmutable())->setTimestamp($timeStamp);
   }
 
   private function getCounters(array $row): array {
