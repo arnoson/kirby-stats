@@ -35,8 +35,7 @@ class KirbyStats {
   }
 
   public function handle($path, DateTimeImmutable $date = null) {
-    $debug = option('arnoson.kirby-stats.debug');
-    if ($debug) {
+    if ($debug = option('arnoson.kirby-stats.debug')) {
       $startTime = microtime(true);
     }
 

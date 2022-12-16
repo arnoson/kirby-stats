@@ -34,8 +34,8 @@ export default {
       for (const { label, paths, missing } of Object.values(this.stats)) {
         data.labels.push(label)
         if (missing) {
-          data.views.push(0)
-          data.visits.push(0)
+          data.views.push(null)
+          data.visits.push(null)
           continue
         }
 

@@ -3,6 +3,7 @@
 namespace arnoson\KirbyStats;
 
 use DatePeriod;
+use DateTime;
 use DateTimeImmutable;
 use Kirby\Database\Database;
 use Kirby\Toolkit\A;
@@ -139,18 +140,29 @@ class Counters {
         return $array;
       });
 
+    if (!count($rows)) {
+      return [];
+    }
+
     // Group the rows by time and path.
     $data = $this->groupRows($rows, $interval);
 
     // Add any missing intervals.
+    $firstTime = $this->getFirstTime();
+    $now = (new DateTime())->getTimestamp();
     $period = new DatePeriod($from, Interval::interval($interval), $to);
     foreach ($period as $time) {
       $timeStamp = $time->getTimestamp();
+
+      // If the time is before the earliest entry or in the future we consider
+      // it as missing. Otherwise it would just represent empty data.
+      $missing = $timeStamp < $firstTime || $timeStamp > $now;
+
       $data[$timeStamp] ??= [
         'time' => $timeStamp,
         'label' => Interval::label($interval, $time),
         'paths' => [],
-        'missing' => true,
+        'missing' => $missing,
       ];
     }
 
@@ -205,6 +217,13 @@ class Counters {
     }
 
     return $group;
+  }
+
+  function getFirstTime() {
+    $tableName = $this->database->sql()->quoteIdentifier($this->tableName);
+    $query = "SELECT time FROM $tableName ORDER BY time ASC LIMIT 1";
+    $rows = $this->database->query($query);
+    return $rows->isEmpty() ? 0 : intval($rows->first()->time());
   }
 
   private function getCounters(array $row): array {
