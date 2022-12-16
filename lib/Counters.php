@@ -149,14 +149,15 @@ class Counters {
 
     // Add any missing intervals.
     $firstTime = $this->getFirstTime();
-    $now = (new DateTime())->getTimestamp();
-    $period = new DatePeriod($from, Interval::interval($interval), $to);
+    $now = new DateTime();
+    $dateInterval = Interval::interval($interval);
+    $period = new DatePeriod($from, $dateInterval, $to);
     foreach ($period as $time) {
       $timeStamp = $time->getTimestamp();
 
       // If the time is before the earliest entry or in the future we consider
       // it as missing. Otherwise it would just represent empty data.
-      $missing = $timeStamp < $firstTime || $timeStamp > $now;
+      $missing = $timeStamp < $firstTime || $timeStamp > $now->getTimestamp();
 
       $data[$timeStamp] ??= [
         'time' => $timeStamp,
@@ -164,6 +165,10 @@ class Counters {
         'paths' => [],
         'missing' => $missing,
       ];
+
+      if ($now >= $time && $now < $time->add($dateInterval)) {
+        $data[$timeStamp]['now'] = true;
+      }
     }
 
     return $data;

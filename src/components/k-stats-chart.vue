@@ -29,15 +29,21 @@ export default {
         labels: [] as string[],
         totalViews: 0,
         totalVisits: 0,
+        isFinished: true,
       }
 
-      for (const { label, paths, missing } of Object.values(this.stats)) {
+      for (const { label, paths, missing, now } of Object.values(this.stats)) {
         data.labels.push(label)
         if (missing) {
           data.views.push(null)
           data.visits.push(null)
           continue
         }
+
+        // If (the last) entry's time interval is not yet finished we'll set
+        // a flag to render a dashed line, indicating that the counters are not
+        // final yet.
+        if (now) data.isFinished = false
 
         const [views, visits] = Object.values(paths).reduce(
           ([views, visits], { counters }) => [
@@ -46,6 +52,7 @@ export default {
           ],
           [0, 0]
         )
+
         data.views.push(views)
         data.visits.push(visits)
         data.totalViews += views
@@ -53,6 +60,21 @@ export default {
       }
 
       return data
+    },
+
+    series() {
+      const data = this.type === 'views' ? this.data.views : this.data.visits
+      if (this.data.isFinished) return [data]
+
+      const trimmedData = this.trimData(data)
+      const finishedData = trimmedData.slice(0, -1)
+      const unfinishedData = trimmedData.map((value, index) =>
+        index < finishedData.length - 1 ? null : value
+      )
+
+      console.log(unfinishedData)
+
+      return [finishedData, unfinishedData]
     },
   },
 
@@ -62,7 +84,7 @@ export default {
       // @ts-ignore
       this.$refs.chart,
       {
-        series: [this.type === 'views' ? this.data.views : this.data.visits],
+        series: this.series,
         labels: this.data.labels,
       },
       {
@@ -95,23 +117,16 @@ export default {
   },
 
   watch: {
-    data() {
-      this.updateChart()
-    },
-    type() {
-      this.updateChart()
+    series(value) {
+      // @ts-ignore
+      this.chart.update({
+        series: value,
+        labels: this.data.labels,
+      })
     },
   },
 
   methods: {
-    updateChart() {
-      // @ts-ignore
-      this.chart.update({
-        series: [this.type === 'views' ? this.data.views : this.data.visits],
-        labels: this.data.labels,
-      })
-    },
-
     showMaxLabels(max: number) {
       return (label: Label, index: number) => {
         const { length } = this.data.labels
@@ -120,6 +135,13 @@ export default {
         const n = Math.round(length / max)
         return index % n === 0 ? label : null
       }
+    },
+
+    trimData<T>(data: Array<T | null>): Array<T | null> {
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i] !== null) return data.slice(0, i + 1)
+      }
+      return data
     },
   },
 }
@@ -163,6 +185,10 @@ export default {
     stroke-linejoin: round;
     stroke-linecap: round;
     stroke: var(--color-blue);
+  }
+
+  .ct-series-b .ct-line {
+    stroke-dasharray: 6;
   }
 
   .ct-area {
