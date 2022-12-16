@@ -1,6 +1,9 @@
 # OS files
 .DS_Store
 
+# dev
+stats-log.txt
+
 # npm modules
 /node_modules
 
