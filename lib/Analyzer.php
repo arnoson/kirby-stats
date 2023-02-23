@@ -3,7 +3,7 @@
 namespace arnoson\KirbyStats;
 
 use Browser;
-use Jaybizzle\CrawlerDetect\CrawlerDetect;
+use DeviceDetector\DeviceDetector;
 
 class Analyzer {
   protected $host;
@@ -18,18 +18,20 @@ class Analyzer {
    * @return array
    */
   public function analyze(): array {
-    $browser = new Browser($this->userAgent());
+    $device = new DeviceDetector($this->userAgent());
+    $device->discardBotInformation();
+    $device->parse();
 
     return [
-      'bot' => (new CrawlerDetect())->isCrawler($this->userAgent()),
+      'bot' => $device->isBot(),
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
       'referrer' =>
         $this->host() !== $this->referrerHost() ? $this->referrerHost() : null,
-      // Remove all spaces so the browser name is a valid sql column name (only
-      // relevant for internet explorer).
-      'browser' => str_replace(' ', '', $browser->getBrowser()),
-      'os' => $browser->getPlatform(),
+      // Remove all spaces so the browser name is a valid sql column name (eg
+      // `Internet Explorer` or `Microsoft Edge`).
+      'browser' => str_replace(' ', '', $device->getClient('name')),
+      'os' => $device->getOs('name'),
     ];
   }
 

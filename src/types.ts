@@ -2,8 +2,8 @@ export const browsers = [
   'Firefox',
   'Chrome',
   'Opera',
-  'Edge',
   'Safari',
+  'MicrosoftEdge',
   'InternetExplorer',
 ] as const
 

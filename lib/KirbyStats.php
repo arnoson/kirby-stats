@@ -12,7 +12,7 @@ class KirbyStats {
 
   protected const BROWSERS = [
     'Opera',
-    'Edge',
+    'MicrosoftEdge',
     'InternetExplorer',
     'Firefox',
     'Safari',
