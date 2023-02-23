@@ -13,6 +13,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { browsers, Stats } from '../types'
+import { pascalToTitle } from '../utils'
 
 export default {
   props: {
@@ -31,7 +32,7 @@ export default {
         if (missing) continue
         for (const { counters } of Object.values(paths)) {
           for (const name of browsers) {
-            data[name] ??= { name, visits: 0, percent: 0 }
+            data[name] ??= { name: pascalToTitle(name), visits: 0, percent: 0 }
             data[name].visits += counters[name]
             totalVisits += counters[name]
           }
