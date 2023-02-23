@@ -7,7 +7,7 @@
     "server": "php -q -S localhost:8888  -t ./example/ ./example/router.php",
     "dev": "kirbyup serve src/index.ts",
     "build": "kirbyup src/index.ts",
-    "test": "./vendor/bin/phpunit tests"
+    "test": "./vendor/bin/pest"
   },
   "keywords": [],
   "author": "Arno Schlipf",
