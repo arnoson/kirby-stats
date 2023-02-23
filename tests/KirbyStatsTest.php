@@ -24,7 +24,6 @@ it('provides data', function () {
   $data = $stats->data(Interval::HOUR, $from, $to);
   $time = Interval::startOf(Interval::HOUR, $now)->getTimestamp();
   expect($data[$time]['paths']['/test']['counters']['visits'])->toBe(3);
-  expect(true)->toBeFalse();
 
   $stats->remove();
 });
