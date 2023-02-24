@@ -4,6 +4,7 @@ namespace arnoson\KirbyStats;
 
 use Browser;
 use DeviceDetector\DeviceDetector;
+use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
 class Analyzer {
   protected $host;
@@ -22,8 +23,11 @@ class Analyzer {
     $device->discardBotInformation();
     $device->parse();
 
+    $isBot =
+      $device->isBot() || (new CrawlerDetect())->isCrawler($this->userAgent());
+
     return [
-      'bot' => $device->isBot(),
+      'bot' => $isBot,
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
       'referrer' =>
