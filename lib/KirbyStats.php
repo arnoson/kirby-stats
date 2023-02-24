@@ -72,9 +72,11 @@ class KirbyStats {
       $duration = microtime(true) - $startTime . 'μs';
       $agent = $_SERVER['HTTP_USER_AGENT'];
       $time = (new DateTime())->format('Y-m-d H:i:s');
+      $os = $analysis['os'];
+      $browser = $analysis['browser'];
       F::append(
         kirby()->root('base') . '/stats-log.txt',
-        "[$time] $duration $path $agent\n"
+        "[$time] $duration $path $os $browser $agent\n"
       );
     }
   }
