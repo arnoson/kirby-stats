@@ -19,7 +19,7 @@ class KirbyStats {
     'Chrome',
   ];
 
-  protected const OS = ['Windows', 'Apple', 'Linux', 'Android', 'iOS'];
+  protected const OS = ['Windows', 'Mac', 'Linux', 'Android', 'iOS'];
 
   public function __construct($interval = null) {
     $counters = array_merge(['views', 'visits'], self::BROWSERS, self::OS);

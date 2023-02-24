@@ -26,6 +26,9 @@ class Analyzer {
     $isBot =
       $device->isBot() || (new CrawlerDetect())->isCrawler($this->userAgent());
 
+    $os = $device->getOs('name');
+    $os = $os === 'GNU/Linux' ? 'Linux' : $os;
+
     return [
       'bot' => $isBot,
       'visit' => $this->isVisit(),
@@ -35,7 +38,7 @@ class Analyzer {
       // Remove all spaces so the browser name is a valid sql column name (eg
       // `Internet Explorer` or `Microsoft Edge`).
       'browser' => str_replace(' ', '', $device->getClient('name')),
-      'os' => $device->getOs('name'),
+      'os' => $os,
     ];
   }
 

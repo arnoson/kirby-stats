@@ -7,11 +7,11 @@ export const browsers = [
   'InternetExplorer',
 ] as const
 
-export const os = ['Windows', 'Apple', 'Linux', 'Android', 'iOS'] as const
+export const os = ['Windows', 'Mac', 'Linux', 'Android', 'iOS'] as const
 
-export type Browser = typeof browsers[number]
+export type Browser = (typeof browsers)[number]
 
-export type OS = typeof os[number]
+export type OS = (typeof os)[number]
 
 export type StatsCounters = Record<'views' | 'visits' | Browser | OS, number>
 

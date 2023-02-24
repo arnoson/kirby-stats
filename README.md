@@ -20,7 +20,7 @@ For each page view various counters are increased for a specified time interval.
 - `views` will increase for each page view, except reloads
 - `visit` will only increase if a user visits your website either from a blank tab or via a link from another website. To determine if a request counts as a visit, the user's referrer is checked (but not saved). This also means that these aren't unique visits like in many other tracking plugins. If the same person visits your website two times in a day you will see two visits.
 - `Firefox`, `Opera`, `MicrosoftEdge`, `InternetExplorer`, `Safari` or `Chrome` will be increased for each visit depending on the user's browser (the user agent is used to determine this).
-- `Windows`, `Apple`, `Linux`, `Android`, `iOS` will be increased for each visit depending on the users's operating system (the user agent is used to determine this).
+- `Windows`, `Mac`, `Linux`, `Android`, `iOS` will be increased for each visit depending on the users's operating system (the user agent is used to determine this).
 
 That's it. No IP address is stored and no cookie is set by this plugin. And also no unique requests, all data is grouped into time intervals. If a second user visits in the same hour, the counters are increased accordingly. If a user visits in the following hour or later a new row of counters is created in the table.
 
