@@ -12,7 +12,9 @@ load([
 
 App::plugin('arnoson/kirby-stats', [
   'options' => [
-    'sqlite' => kirby()->root('site') . '/plugins/kirby-stats/stats.sqlite',
+    'sqlite' => kirby()->root('storage')
+      ? kirby()->root('storage') . '/stats.sqlite'
+      : kirby()->root('site') . '/storage/stats.sqlite',
     'ignoreDirs' => ['panel', 'api', 'assets', 'media'],
   ],
   'hooks' => include __DIR__ . '/hooks/hooks.php',
