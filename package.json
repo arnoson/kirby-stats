@@ -12,9 +12,9 @@
   "author": "Arno Schlipf",
   "license": "MIT",
   "devDependencies": {
-    "@prettier/plugin-php": "^0.19.2",
-    "kirbyup": "^2.1.0",
-    "prettier": "^2.7.1"
+    "@prettier/plugin-php": "^0.22.1",
+    "kirbyup": "^3.1.0",
+    "prettier": "^3.1.1"
   },
   "dependencies": {
     "chartist": "^1.3.0"
