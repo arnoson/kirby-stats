@@ -3,6 +3,7 @@
 namespace arnoson\KirbyStats;
 
 use DeviceDetector\DeviceDetector;
+use DeviceDetector\Parser\Client\Browser;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
 class Analyzer {
@@ -27,6 +28,10 @@ class Analyzer {
 
     $os = $device->getOs('name');
     $os = $os === 'GNU/Linux' ? 'Linux' : $os;
+    $os = preg_replace('/[^a-zA-Z0-9_]/', '', $os);
+
+    $browser = Browser::getBrowserFamily($device->getClient('name'));
+    $browser = preg_replace('/[^a-zA-Z0-9_]/', '', $browser);
 
     return [
       'bot' => $isBot,
@@ -36,7 +41,7 @@ class Analyzer {
         $this->host() !== $this->referrerHost() ? $this->referrerHost() : null,
       // Remove all spaces so the browser name is a valid sql column name (eg
       // `Internet Explorer` or `Microsoft Edge`).
-      'browser' => str_replace(' ', '', $device->getClient('name')),
+      'browser' => $browser,
       'os' => $os,
     ];
   }
