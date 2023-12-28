@@ -2,7 +2,6 @@
 
 namespace arnoson\KirbyStats;
 
-use Browser;
 use DeviceDetector\DeviceDetector;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
@@ -70,15 +69,6 @@ class Analyzer {
   protected function userAgent(): string {
     return $this->userAgent ??
       ($this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null);
-  }
-
-  /**
-   * Get the browser info.
-   *
-   * @return array|null
-   */
-  protected function browser() {
-    return $this->browser ?? ($this->browser = new Browser($this->userAgent()));
   }
 
   /**

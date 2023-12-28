@@ -10,7 +10,6 @@
   },
   "require": {
     "getkirby/composer-installer": "^1.2",
-    "cbschuld/browser.php": "^1.9",
     "matomo/device-detector": "^6.1",
     "jaybizzle/crawler-detect": "^1.2"
   },
