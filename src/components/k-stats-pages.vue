@@ -69,9 +69,9 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style>
 .k-stats-pages {
-  .k-table-empty {
+  & .k-table-empty {
     padding: 0.325rem 0.75rem;
   }
 }

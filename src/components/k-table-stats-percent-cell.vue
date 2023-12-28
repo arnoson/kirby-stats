@@ -21,29 +21,28 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style>
 .k-table-stats-percent-cell {
   position: relative;
+}
 
-  &-text {
-    // Make sure text is above the bar.
-    position: relative;
-    // padding-inline: 0.65rem;
-  }
+.k-table-stats-percent-cell-text {
+  /* Make sure text is above the bar. */
+  position: relative;
+}
 
-  &-bar {
-    height: 100%;
-    border-radius: var(--rounded);
-    background-color: var(--color-blue-200);
-  }
+.k-table-stats-percent-cell-bar {
+  height: 100%;
+  border-radius: var(--rounded);
+  background-color: var(--color-blue-200);
+}
 
-  &-bar-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    padding: 0.08rem 0.4rem;
-  }
+.k-table-stats-percent-cell-bar-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0.08rem 0.4rem;
 }
 </style>

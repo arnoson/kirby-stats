@@ -50,7 +50,7 @@ export default {
             views + counters.views,
             visits + counters.visits,
           ],
-          [0, 0]
+          [0, 0],
         )
 
         data.views.push(views)
@@ -69,7 +69,7 @@ export default {
       const trimmedData = this.trimData(data)
       const finishedData = trimmedData.slice(0, -1)
       const unfinishedData = trimmedData.map((value, index) =>
-        index < finishedData.length - 1 ? null : value
+        index < finishedData.length - 1 ? null : value,
       )
 
       console.log(unfinishedData)
@@ -112,7 +112,7 @@ export default {
             },
           },
         ],
-      ]
+      ],
     )
   },
 
@@ -147,71 +147,71 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style>
 .k-stats-chart {
   &.k-stat {
     padding: 0rem 3rem 0.3rem 0.7rem;
   }
 
-  &-chartist-container {
-    padding-top: 2rem;
-    height: 400px;
-  }
-
-  &-count {
-    font-size: 1.25rem;
-    margin-bottom: var(--spacing-1);
-  }
-
-  &-label {
-    font-size: var(--text-xs);
-  }
-
-  k-button.active {
+  & .k-button.active {
     color: blue;
   }
 
-  svg {
+  & svg {
     overflow: visible;
   }
 
-  .ct-point {
+  & .ct-point {
     stroke-width: 6px;
     stroke: var(--color-blue);
   }
 
-  .ct-line {
+  & .ct-line {
     stroke-width: 4px;
     stroke-linejoin: round;
     stroke-linecap: round;
     stroke: var(--color-blue);
   }
 
-  .ct-series-b .ct-line {
+  & .ct-series-b .ct-line {
     stroke-dasharray: 6;
   }
 
-  .ct-area {
-    // Fill and opacity match `--color-blue-200`.
+  & .ct-area {
+    /* Fill and opacity match `--color-blue-200`. */
     fill: var(--color-blue);
     fill-opacity: 0.29;
   }
 
-  .ct-label.ct-vertical.ct-start,
-  .ct-label.ct-vertical.ct-end {
+  & .ct-label.ct-vertical.ct-start,
+  & .ct-label.ct-vertical.ct-end {
     transform: translateY(50%);
     align-items: center;
   }
 
-  .ct-label.ct-horizontal.ct-start,
-  .ct-label.ct-horizontal.ct-end {
+  & .ct-label.ct-horizontal.ct-start,
+  & .ct-label.ct-horizontal.ct-end {
     white-space: nowrap;
     transform: translateX(-50%);
     justify-content: center;
   }
 
-  .ct-label.ct-horizontal {
+  & .ct-label.ct-horizontal {
     margin-top: 0.2rem;
   }
+}
+
+.k-stats-chart-chartist-container {
+  padding-top: 2rem;
+  height: 400px;
+}
+
+.k-stats-chart-count {
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-1);
+}
+
+.k-stats-chart-label {
+  font-size: var(--text-xs);
 }
 </style>

@@ -137,50 +137,48 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style>
 .k-stats-main-view {
-  .k-button[data-disabled] {
+  & .k-button[data-disabled] {
     opacity: 0.5;
     pointer-events: none;
     cursor: default;
   }
 
-  .k-table {
-    tr td:nth-child(2) {
+  & .k-table {
+    & tr td:nth-child(2) {
       text-align: right;
     }
 
-    tr th:nth-child(2) {
+    & tr th:nth-child(2) {
       text-align: center;
     }
   }
 }
 
-.k-stats {
-  &-type-button {
-    position: relative;
+.k-stats-type-button {
+  position: relative;
 
-    // Adjust the letter-spacing to roughly match the bold weight.
-    letter-spacing: 0.3px;
+  /* Adjust the letter-spacing to roughly match the bold weight. */
+  letter-spacing: 0.3px;
 
-    &:not(.active):not(:hover) {
-      color: var(--color-gray-600);
-    }
-    &.active {
-      font-weight: var(--font-bold);
-      letter-spacing: 0;
-    }
+  &:not(.active):not(:hover) {
+    color: var(--color-gray-600);
   }
-
-  // Make sure the buttons always takes up the same space by adding an invisible
-  // bold version to avoid layout shift.
-  &-type-display {
-    position: absolute;
-  }
-  &-type-width {
-    visibility: hidden;
-    letter-spacing: 0;
+  &.active {
     font-weight: var(--font-bold);
+    letter-spacing: 0;
   }
+}
+
+/* Make sure the buttons always takes up the same space by adding an invisible
+  bold version to avoid layout shift. */
+.k-stats-type-display {
+  position: absolute;
+}
+.k-stats-type-width {
+  visibility: hidden;
+  letter-spacing: 0;
+  font-weight: var(--font-bold);
 }
 </style>
