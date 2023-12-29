@@ -13,7 +13,6 @@ class Analyzer {
   public function analyze(string|null $referrer): array {
     $host = strtok($_SERVER['HTTP_HOST'], ':');
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
-    $referrerHost = parse_url($referrer, PHP_URL_HOST);
 
     $device = new DeviceDetector($userAgent);
     $device->discardBotInformation();
@@ -34,7 +33,7 @@ class Analyzer {
       // Right now, everything counts as a view since we already filter out
       // page reloads in the tracking script.
       'view' => true,
-      'visit' => $host !== $referrerHost,
+      'visit' => $host !== $referrer,
     ];
   }
 
