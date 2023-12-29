@@ -5,9 +5,6 @@
         Stats {{ page ? ` for ${labels.page}` : '' }}
         <template #buttons>
           <k-button-group>
-            <k-button icon="cog">Settings</k-button>
-          </k-button-group>
-          <k-button-group>
             <k-button
               :link="urls.last"
               icon="angle-left"
