@@ -34,10 +34,40 @@ composer require arnoson/kirby-stats
 
 ## Usage
 
-See the `/example` folder, documentation coming soon.
+See the `/example` folder, documentation is still WIP.
+
+## Options
+
+```php
+// site/config.php
+[
+  'arnoson.kirby-stats' => [
+    // The time interval in which to group the collected data. Use the default
+    // 'hour' if you are interested in how your visits/views change during the
+    // day, or something like 'week' if don't really care about the details.
+    // Allowed values: 'hour', 'day', 'week', 'month', 'year'.
+    'interval' => 'hour',
+
+    // Where to (automatically) create the database. Default is
+    // '/storage/stats.sqlite' for public folder setups or
+    // '/site/storage/stats.sqlite' for normal setups.
+    'sqlite' => dirname(__DIR__) . '/some-file-path.sqlite'
+  ],
+];
+```
+
+Note: if you want to use Kirby's roots to define the database location use
+Kirby's [ready](https://getkirby.com/docs/reference/system/options/ready) callback:
+
+```php
+[
+  'ready' => fn() => [
+    'arnoson.kirby-stats.sqlite' => kirby()->root('site') . '/stats.sqlite'
+  ]
+];
+```
 
 # Credits
 
-- https://github.com/cbschuld/Browser.php
 - https://github.com/FabianSperrle/kirby-stats
 - https://github.com/Daandelange/kirby3-simplestats
