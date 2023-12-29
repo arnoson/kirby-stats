@@ -48,20 +48,8 @@ class KirbyStats {
       return;
     }
 
-    $ignore = option('arnoson.kirby-stats.ignore');
-    if (is_callable($ignore) && $ignore($path)) {
-      return;
-    }
-
-    $ignoreDirs = option("arnoson.kirby-stats.ignoreDirs", []);
-    foreach ($ignoreDirs as $dir) {
-      if ($path === "/$dir" || Str::startsWith($path, "/$dir/")) {
-        return;
-      }
-    }
-
     $analysis = (new Analyzer())->analyze($referrer);
-    
+        
     if ($analysis['bot'] || !($analysis['view'] || $analysis['visit'])) {
       return;
     }
