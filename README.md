@@ -34,7 +34,9 @@ composer require arnoson/kirby-stats
 
 ## Usage
 
-See the `/example` folder, documentation is still WIP.
+Also see the `/example` folder, documentation is still WIP.
+
+The plugin provides an endpoint `/kirby-stats/hit` which gets called from a little [script](https://github.com/arnoson/kirby-stats/blob/main/example/assets/stats.js). Simply add the script to your website and include it in your templates like shown in the example.
 
 ## Options
 
