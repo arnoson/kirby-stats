@@ -6,13 +6,15 @@
     "server": "php -q -S localhost:8888  -t ./example/ ./example/router.php",
     "dev": "kirbyup serve src/index.ts",
     "build": "kirbyup src/index.ts",
-    "test": "./vendor/bin/pest"
+    "test": "./vendor/bin/pest",
+    "release": "bumpp composer.json"
   },
   "keywords": [],
   "author": "Arno Schlipf",
   "license": "MIT",
   "devDependencies": {
     "@prettier/plugin-php": "^0.22.1",
+    "bumpp": "^9.2.1",
     "kirbyup": "^3.1.0",
     "prettier": "^3.1.1"
   },
