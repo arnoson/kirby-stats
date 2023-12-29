@@ -17,9 +17,9 @@ it('provides data', function () {
   $to = $now->modify('tomorrow');
 
   $stats = new KirbyStats(Interval::HOUR);
-  $stats->handle('/test', $now);
-  $stats->handle('/test', $now);
-  $stats->handle('/test', $now);
+  $stats->handle('/test', null, $now);
+  $stats->handle('/test', null, $now);
+  $stats->handle('/test', null, $now);
 
   $data = $stats->data(Interval::HOUR, $from, $to);
   $time = Interval::startOf(Interval::HOUR, $now)->getTimestamp();
@@ -34,11 +34,11 @@ it('handles data stored in a bigger interval than the current', function () {
   $to = $now->modify('tomorrow');
 
   $stats = new KirbyStats(Interval::HOUR);
-  $stats->handle('/test', $now);
+  $stats->handle('/test', null, $now);
 
   $stats = new KirbyStats(Interval::DAY);
   for ($i = 0; $i < 24; $i++) {
-    $stats->handle('/test', $now);
+    $stats->handle('/test', null, $now);
   }
 
   $data = $stats->data(Interval::HOUR, $from, $to);
@@ -57,10 +57,10 @@ it('handles data stored in a smaller interval than the current', function () {
   $to = $now->modify('next week');
 
   $stats = new KirbyStats(Interval::WEEK);
-  $stats->handle('/test', $now);
+  $stats->handle('/test', null, $now);
 
   $stats = new KirbyStats(Interval::DAY);
-  $stats->handle('/test', $now);
+  $stats->handle('/test', null, $now);
 
   $data = $stats->data(Interval::WEEK, $from, $to);
   $time = Interval::startOf(Interval::WEEK, $now)->getTimestamp();
@@ -77,8 +77,8 @@ it('handles missing data', function () {
   $to = $time->modify('+2 day');
 
   $stats = new KirbyStats(Interval::DAY);
-  $stats->handle('/test', $time->modify('-2 day'));
-  $stats->handle('/test', $time);
+  $stats->handle('/test', null, $time->modify('-2 day'));
+  $stats->handle('/test', null, $time);
 
   $data = $stats->data(Interval::DAY, $from, $to);
 

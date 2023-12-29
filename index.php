@@ -17,6 +17,6 @@ App::plugin('arnoson/kirby-stats', [
       : kirby()->root('site') . '/storage/stats.sqlite',
     'ignoreDirs' => ['panel', 'api', 'assets', 'media'],
   ],
-  'hooks' => include __DIR__ . '/hooks/hooks.php',
+  'routes' => include __DIR__ . '/routes/routes.php',
   'areas' => include __DIR__ . '/areas/areas.php',
 ]);

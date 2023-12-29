@@ -6,6 +6,7 @@ use DateTime;
 use DateTimeImmutable;
 use Kirby\Database\Database;
 use Kirby\Filesystem\F;
+use Kirby\Toolkit\Str;
 
 class KirbyStats {
   protected Counters $stats;
@@ -34,7 +35,11 @@ class KirbyStats {
     $this->stats = new Counters($database, 'Stats', $counters, $interval);
   }
 
-  public function handle($path, DateTimeImmutable $date = null) {
+  public function handle(
+    string $path,
+    string|null $referrer,
+    DateTimeImmutable $date = null
+  ) {
     if ($debug = option('arnoson.kirby-stats.debug')) {
       $startTime = microtime(true);
     }
@@ -43,7 +48,20 @@ class KirbyStats {
       return;
     }
 
-    $analysis = (new Analyzer())->analyze();
+    $ignore = option('arnoson.kirby-stats.ignore');
+    if (is_callable($ignore) && $ignore($path)) {
+      return;
+    }
+
+    $ignoreDirs = option("arnoson.kirby-stats.ignoreDirs", []);
+    foreach ($ignoreDirs as $dir) {
+      if ($path === "/$dir" || Str::startsWith($path, "/$dir/")) {
+        return;
+      }
+    }
+
+    $analysis = (new Analyzer())->analyze($referrer);
+    
     if ($analysis['bot'] || !($analysis['view'] || $analysis['visit'])) {
       return;
     }
@@ -54,6 +72,7 @@ class KirbyStats {
       $counters[] = 'views';
     }
 
+    // We are only interested in collection browser/os infos per visit.
     if ($analysis['visit']) {
       $counters[] = 'visits';
 
