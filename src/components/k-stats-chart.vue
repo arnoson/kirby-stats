@@ -150,6 +150,7 @@ export default {
 <style>
 .k-stats-chart {
   &.k-stat {
+    overflow: hidden;
     padding: 0rem 3rem 0.3rem 0.7rem;
   }
 
