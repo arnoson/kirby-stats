@@ -7,7 +7,7 @@
     events.forEach((e) => document.addEventListener(e, sendStats, eventOptions))
 
   const removeEventListeners = () =>
-    events.forEach((e) => document.addEventListener(e, sendStats))
+    events.forEach((e) => document.removeEventListener(e, sendStats, eventOptions))
 
   const sendStats = () => {
     if (statsAreSend) return
