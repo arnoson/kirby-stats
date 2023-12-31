@@ -16,7 +16,7 @@
     data.append('path', location.pathname)
     const { referrer } = document
     if (referrer) data.append('referrer', new URL(referrer).host)
-    navigator.sendBeacon('/stats/handle', data)
+    navigator.sendBeacon('/kirby-stats/hit', data)
 
     removeEventListeners()
     statsAreSend = true
