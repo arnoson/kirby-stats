@@ -22,6 +22,12 @@
     statsAreSend = true
   }
 
-  const isReload = performance.navigation.type === 1
+  const isReload = (
+    (window.performance.navigation && window.performance.navigation.type === 1) ||
+      window.performance
+        .getEntriesByType('navigation')
+        .map((nav) => nav.type)
+        .includes('reload')
+  );
   if (!isReload) addEventListeners()
 })()
