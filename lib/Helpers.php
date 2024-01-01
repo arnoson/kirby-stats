@@ -11,13 +11,13 @@ class Helpers {
       }
       return implode(' / ', array_reverse($parts));
     }
-    
+
     if ($path == '/home') {
       return page(option('home', 'home'))
         ->title()
         ->value();
     }
-    
+
     return $path;
   }
 }
