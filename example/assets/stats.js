@@ -24,13 +24,9 @@
     statsAreSend = true
   }
 
-  const isReload =
-    (window.performance.navigation &&
-      window.performance.navigation.type === 1) ||
-    window.performance
-      .getEntriesByType('navigation')
-      .map((nav) => nav.type)
-      .includes('reload')
+  const isReload = window.performance
+    .getEntriesByType('navigation')
+    .some((entry) => entry.type === 'reload')
 
   if (!isReload) addEventListeners()
 })()
