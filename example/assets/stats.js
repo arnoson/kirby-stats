@@ -7,7 +7,9 @@
     events.forEach((e) => document.addEventListener(e, sendStats, eventOptions))
 
   const removeEventListeners = () =>
-    events.forEach((e) => document.removeEventListener(e, sendStats, eventOptions))
+    events.forEach((e) =>
+      document.removeEventListener(e, sendStats, eventOptions),
+    )
 
   const sendStats = () => {
     if (statsAreSend) return
@@ -22,12 +24,13 @@
     statsAreSend = true
   }
 
-  const isReload = (
-    (window.performance.navigation && window.performance.navigation.type === 1) ||
-      window.performance
-        .getEntriesByType('navigation')
-        .map((nav) => nav.type)
-        .includes('reload')
-  );
+  const isReload =
+    (window.performance.navigation &&
+      window.performance.navigation.type === 1) ||
+    window.performance
+      .getEntriesByType('navigation')
+      .map((nav) => nav.type)
+      .includes('reload')
+
   if (!isReload) addEventListeners()
 })()
