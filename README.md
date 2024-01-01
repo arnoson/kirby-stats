@@ -53,7 +53,7 @@ The plugin provides an endpoint `/kirby-stats/hit` which gets called from a litt
     // Where to (automatically) create the database. Default is
     // '/storage/stats.sqlite' for public folder setups or
     // '/site/storage/stats.sqlite' for normal setups.
-    'sqlite' => dirname(__DIR__) . '/some-file-path.sqlite'
+    'sqlite' => dirname(__DIR__) . '/some-file-path.sqlite',
   ],
 ];
 ```
@@ -64,8 +64,8 @@ Kirby's [ready](https://getkirby.com/docs/reference/system/options/ready) callba
 ```php
 [
   'ready' => fn() => [
-    'arnoson.kirby-stats.sqlite' => kirby()->root('site') . '/stats.sqlite'
-  ]
+    'arnoson.kirby-stats.sqlite' => kirby()->root('site') . '/stats.sqlite',
+  ],
 ];
 ```
 

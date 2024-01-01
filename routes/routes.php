@@ -7,11 +7,11 @@ return [
   [
     'pattern' => 'kirby-stats/hit',
     'method' => 'POST',
-    'action' => function() {
+    'action' => function () {
       $path = get('path');
       $referrer = get('referrer');
       (new KirbyStats())->handle($path, $referrer);
       return ['status' => 'ok'];
-    }
-  ]
+    },
+  ],
 ];

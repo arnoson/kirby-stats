@@ -49,7 +49,7 @@ class KirbyStats {
     }
 
     $analysis = (new Analyzer())->analyze($referrer);
-        
+
     if ($analysis['bot'] || !($analysis['view'] || $analysis['visit'])) {
       return;
     }

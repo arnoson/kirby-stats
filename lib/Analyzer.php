@@ -18,8 +18,7 @@ class Analyzer {
     $device->discardBotInformation();
     $device->parse();
 
-    $isBot =
-      $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
+    $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
 
     $os = $device->getOs('name');
     $os = $os === 'GNU/Linux' ? 'Linux' : $os;
