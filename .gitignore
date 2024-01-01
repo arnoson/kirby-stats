@@ -1,3 +1,6 @@
+# VSCode
+.vscode/.*
+
 # OS files
 .DS_Store
 
