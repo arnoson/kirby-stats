@@ -1,0 +1,6 @@
+**/dist
+**/kirby
+**/vendor
+**/media
+**/accounts
+composer.lock

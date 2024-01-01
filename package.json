@@ -2,11 +2,14 @@
   "name": "kirby-stats",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "server": "php -q -S localhost:8888  -t ./example/ ./example/router.php",
     "dev": "kirbyup serve src/index.ts",
     "build": "kirbyup src/index.ts",
+    "format": "prettier --write .",
     "test": "./vendor/bin/pest",
+    "test:format": "prettier --check .",
     "release": "bumpp composer.json"
   },
   "keywords": [],
