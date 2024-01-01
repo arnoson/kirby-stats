@@ -96,10 +96,10 @@ class Counters {
 
     $updates = join(', ', $updates);
     $table = $sql->tableName($this->tableName);
-    $where = '"path" = ? AND "time" = ?';
+    $where = '"path" = ? AND "time" = ? AND "interval" = ?';
     $query = "UPDATE $table SET $updates WHERE $where";
 
-    return $this->database->execute($query, [$path, $time]);
+    return $this->database->execute($query, [$path, $time, $this->interval]);
   }
 
   /**
