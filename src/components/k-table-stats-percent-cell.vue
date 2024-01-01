@@ -37,6 +37,10 @@ export default {
   background-color: var(--color-blue-200);
 }
 
+tr:hover .k-table-stats-percent-cell-bar {
+  background-color: var(--color-blue-300);
+}
+
 .k-table-stats-percent-cell-bar-wrapper {
   position: absolute;
   top: 0;
