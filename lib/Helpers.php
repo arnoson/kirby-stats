@@ -10,12 +10,14 @@ class Helpers {
         $parts[] = $page->title()->value();
       }
       return implode(' / ', array_reverse($parts));
-    } elseif ($path == '/home') {
+    }
+    
+    if ($path == '/home') {
       return page(option('home', 'home'))
         ->title()
         ->value();
-    } else {
-      return $path;
     }
+    
+    return $path;
   }
 }
