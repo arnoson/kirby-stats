@@ -4,3 +4,5 @@
 **/media
 **/accounts
 composer.lock
+/index.js
+/index.css
