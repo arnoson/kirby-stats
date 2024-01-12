@@ -44,6 +44,11 @@ The plugin provides an endpoint `/kirby-stats/hit` which gets called from a litt
 // site/config.php
 [
   'arnoson.kirby-stats' => [
+    // Enable or disable tracking. This is useful to disable tracking in local
+    // development by using Kirby's multi environment config setup:
+    // https://getkirby.com/docs/guide/configuration#multi-environment-setup
+    'enabled' => true,
+
     // The time interval in which to group the collected data. Use the default
     // 'hour' if you are interested in how your visits/views change during the
     // day, or something like 'week' if don't really care about the details.
