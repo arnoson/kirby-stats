@@ -44,7 +44,7 @@ class KirbyStats {
       $startTime = microtime(true);
     }
 
-    if (kirby()->user()) {
+    if (kirby()->user() || !option('arnoson.kirby-stats.enabled')) {
       return;
     }
 

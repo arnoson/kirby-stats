@@ -12,6 +12,7 @@ load([
 
 App::plugin('arnoson/kirby-stats', [
   'options' => [
+    'enabled' => true,
     'sqlite' => kirby()->root('storage')
       ? kirby()->root('storage') . '/stats.sqlite'
       : kirby()->root('site') . '/storage/stats.sqlite',
