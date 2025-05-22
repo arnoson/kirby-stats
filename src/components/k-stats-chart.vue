@@ -149,6 +149,11 @@ export default {
 
 <style>
 .k-stats-chart {
+  --kirby-stats-color-chart: light-dark(
+    var(--color-blue),
+    var(--color-blue-650)
+  );
+
   &.k-stat {
     overflow: hidden;
     padding: 0rem 3rem 0.3rem 0.7rem;
@@ -164,14 +169,22 @@ export default {
 
   & .ct-point {
     stroke-width: 6px;
-    stroke: var(--color-blue);
+    stroke: var(--kirby-stats-color-chart);
   }
 
   & .ct-line {
     stroke-width: 4px;
     stroke-linejoin: round;
     stroke-linecap: round;
-    stroke: var(--color-blue);
+    stroke: var(--kirby-stats-color-chart);
+  }
+
+  & .ct-label {
+    color: var(--color-text-dimmed);
+  }
+
+  & .ct-grid {
+    stroke: var(--color-border);
   }
 
   & .ct-series-b .ct-line {
@@ -179,8 +192,7 @@ export default {
   }
 
   & .ct-area {
-    /* Fill and opacity match `--color-blue-200`. */
-    fill: var(--color-blue);
+    fill: var(--kirby-stats-color-chart);
     fill-opacity: 0.29;
   }
 

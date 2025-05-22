@@ -34,11 +34,11 @@ export default {
 .k-table-stats-percent-cell-bar {
   height: 100%;
   border-radius: var(--rounded);
-  background-color: var(--color-blue-200);
+  background-color: light-dark(var(--color-blue-200), var(--color-blue-700));
 }
 
 tr:hover .k-table-stats-percent-cell-bar {
-  background-color: var(--color-blue-300);
+  background-color: light-dark(var(--color-blue-300), var(--color-blue-750));
 }
 
 .k-table-stats-percent-cell-bar-wrapper {
