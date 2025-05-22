@@ -40,11 +40,12 @@ const rows = computed(() => {
     .sort((a, b) => b.percent - a.percent)
 })
 
-const filteredRows = computed(() =>
-  isSearching
-    ? rows.value.filter((row) => row.name.includes(searchQuery.value))
-    : rows.value,
-)
+const filteredRows = computed(() => {
+  const query = searchQuery.value.toLocaleLowerCase()
+  return isSearching
+    ? rows.value.filter((row) => row.name.toLocaleLowerCase().includes(query))
+    : rows.value
+})
 
 const pagination = ref({ page: 1, limit: 10 })
 
