@@ -78,7 +78,10 @@ const toggleIntervalSelect = () => {
       <k-grid style="gap: 1.5rem">
         <k-column width="1/2">
           <section class="k-section" style="padding-bottom: 1.5rem">
-            <header class="k-section-header">
+            <header
+              class="k-section-header"
+              style="min-height: var(--height-xs)"
+            >
               <k-headline>Devices</k-headline>
             </header>
             <browser-section :stats="stats" />
