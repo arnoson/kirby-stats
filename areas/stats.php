@@ -28,7 +28,7 @@ function statsView(array $data) {
   }
 
   return [
-    'component' => 'k-stats-main-view',
+    'component' => 'kirby-stats-main-view',
     'props' => [
       'stats' => $data['stats'],
       'labels' => A::merge($labels, $data['labels']),
