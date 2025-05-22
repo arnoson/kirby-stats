@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Stats } from '../types'
 import { capitalize, slugifyPath } from '../utils'
 
@@ -37,6 +37,19 @@ const rows = computed(() => {
     .sort((a, b) => b.percent - a.percent)
 })
 
+const pagination = ref({ page: 1, limit: 10 })
+
+const paginatedRows = computed(() => {
+  const { page, limit } = pagination.value
+  const from = (page - 1) * limit
+  const to = page * limit
+  return rows.value.slice(from, to)
+})
+
+const paginate = ({ page }: { page: number }) => {
+  pagination.value.page = page
+}
+
 const emptyMessage = computed(() =>
   props.page
     ? `No ${props.type} for ${props.page}`
@@ -52,8 +65,10 @@ const emptyMessage = computed(() =>
       name: { label: 'Page', type: 'stats-page', mobile: true },
       count: { label: capitalize(type), width: '8em', mobile: true },
     }"
-    :rows="rows"
+    :rows="paginatedRows"
     :empty="emptyMessage"
+    :pagination="{ ...pagination, details: true, total: rows.length }"
+    @paginate="paginate"
   />
 </template>
 
