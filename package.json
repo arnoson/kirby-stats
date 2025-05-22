@@ -23,14 +23,14 @@
   "author": "Arno Schlipf",
   "license": "MIT",
   "devDependencies": {
-    "@prettier/plugin-php": "^0.22.1",
-    "bumpp": "^9.2.1",
-    "kirbyup": "^3.1.0",
-    "lint-staged": "^15.2.0",
-    "prettier": "^3.1.1",
-    "simple-git-hooks": "^2.9.0"
+    "@prettier/plugin-php": "^0.22.4",
+    "bumpp": "^10.1.1",
+    "kirbyup": "^3.3.0",
+    "lint-staged": "^16.0.0",
+    "prettier": "^3.5.3",
+    "simple-git-hooks": "^2.13.0"
   },
   "dependencies": {
-    "chartist": "^1.3.0"
+    "chartist": "^1.3.1"
   }
 }
