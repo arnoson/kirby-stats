@@ -55,9 +55,10 @@ The plugin provides an endpoint `/kirby-stats/hit` which gets called from a litt
     // Allowed values: 'hour', 'day', 'week', 'month', 'year'.
     'interval' => 'hour',
 
-    // Where to (automatically) create the database. Default is
-    // '/storage/stats.sqlite' for public folder setups or
-    // '/site/storage/stats.sqlite' for normal setups.
+    // Where to (automatically) create the database. Default is:
+    // - '/storage/stats.sqlite' if 'storage' root is defined (e.g. in public folder setups)
+    // - '/data/storage/stats.sqlite' if 'data' root is defined (e.g. in composerkit)
+    // - '/site/storage/stats.sqlite' as fallback for default Kirby setups
     'sqlite' => dirname(__DIR__) . '/some-file-path.sqlite',
   ],
 ];

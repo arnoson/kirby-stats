@@ -13,9 +13,17 @@ load([
 App::plugin('arnoson/kirby-stats', [
   'options' => [
     'enabled' => true,
-    'sqlite' => kirby()->root('storage')
-      ? kirby()->root('storage') . '/stats.sqlite'
-      : kirby()->root('site') . '/storage/stats.sqlite',
+    'sqlite' => (function () {
+      if ($storage = kirby()->root('storage')) {
+        return $storage . '/stats.sqlite';
+      }
+
+      if ($data = kirby()->root('data')) {
+        return $data . '/storage/stats.sqlite';
+      }
+
+      return kirby()->root('site') . '/storage/stats.sqlite';
+    })(),
     'ignoreDirs' => ['panel', 'api', 'assets', 'media'],
   ],
   'routes' => include __DIR__ . '/routes/routes.php',
