@@ -2,7 +2,7 @@
 
 > :warning: This plugin is still in alpha, a lot of features are still missing or not completed yet.
 
-Kirby stats is a simple, privacy friendly Kirby 3 plugin for tracking page views and visits.
+Kirby stats is a simple, privacy friendly Kirby plugin for tracking page views and visits.
 
 <img alt="Kirby Stats Panel Screenshot" src="assets/kirby-stats-screenshot.png" width="700">
 
