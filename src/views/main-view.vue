@@ -1,5 +1,29 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { Stats } from '../types'
+import browserSection from '../components/browser-section.vue'
+import pagesSection from '../components/pages-section.vue'
+import osSection from '../components/os-section.vue'
+import chartSection from '../components/chart-section.vue'
+
+defineProps<{
+  stats: Stats
+  urls: Record<string, string>
+  labels: Record<string, string>
+  page: string
+}>()
+
+const type = ref<'views' | 'visits'>('views')
+
+const intervalSelect = ref(null)
+const toggleIntervalSelect = () => {
+  // @ts-ignore (missing types for component)
+  intervalSelect.value?.toggle()
+}
+</script>
+
 <template>
-  <k-panel-inside class="k-stats-main-view">
+  <k-panel-inside class="kirby-stats-main-view">
     <k-header>
       Stats {{ page ? ` for ${labels.page}` : '' }}
       <template #buttons>
@@ -46,16 +70,15 @@
       <header class="k-section-header">
         <k-headline>
           <button
-            class="k-stats-type-button"
+            class="kirby-stats-type-button"
             :class="{ active: type === 'views' }"
             @click="type = 'views'"
           >
-            <span class="k-stats-type-display">Views</span>
-            <span class="k-stats-type-width">Views</span>
+            Views
           </button>
           /
           <button
-            class="k-stats-type-button"
+            class="kirby-stats-type-button"
             :class="{ active: type === 'visits' }"
             @click="type = 'visits'"
           >
@@ -63,7 +86,7 @@
           </button>
         </k-headline>
       </header>
-      <k-stats-chart :stats="stats" :type="type" :page="labels.page" />
+      <chart-section :stats="stats" :type="type" :page="labels.page" />
     </section>
 
     <section class="k-section">
@@ -73,10 +96,10 @@
             <header class="k-section-header">
               <k-headline>Devices</k-headline>
             </header>
-            <k-stats-browsers :stats="stats" />
+            <browser-section :stats="stats" />
           </section>
           <section class="k-section" style="margin-top: 0">
-            <k-stats-os :stats="stats" />
+            <os-section :stats="stats" />
           </section>
         </k-column>
         <k-column width="1/2">
@@ -84,7 +107,7 @@
             <header class="k-section-header">
               <k-headline>Pages</k-headline>
             </header>
-            <k-stats-pages :stats="stats" :urls="urls" :type="type" />
+            <pages-section :stats="stats" :urls="urls" :type="type" />
           </section>
         </k-column>
       </k-grid>
@@ -92,86 +115,26 @@
   </k-panel-inside>
 </template>
 
-<script lang="ts">
-import type { PropType } from 'vue'
-import { Stats } from '../types'
-
-export default {
-  props: {
-    stats: {
-      type: Object as PropType<Stats>,
-      required: true,
-    },
-    urls: {
-      type: Object as PropType<Record<string, string>>,
-      required: true,
-    },
-    labels: {
-      type: Object as PropType<Record<string, string>>,
-      required: true,
-    },
-    page: String,
-  },
-
-  data() {
-    return {
-      type: 'views' as 'views' | 'visits',
-    }
-  },
-
-  methods: {
-    toggleIntervalSelect() {
-      // @ts-ignore
-      this.$refs.intervalSelect?.toggle()
-    },
-  },
-}
-</script>
-
-<style>
-.k-stats-main-view {
-  & .k-button[data-disabled] {
+<style scoped>
+.kirby-stats-main-view {
+  .k-button[data-disabled] {
     opacity: 0.5;
     pointer-events: none;
     cursor: default;
   }
 
-  & .k-table {
-    & tr td:nth-child(2) {
+  .k-table {
+    tr td:nth-child(2) {
       text-align: right;
     }
 
-    & tr th:nth-child(2) {
+    tr th:nth-child(2) {
       text-align: center;
     }
   }
 }
 
-.k-stats-type-button {
-  position: relative;
-
-  /* Adjust the letter-spacing to roughly match the bold weight. */
-  letter-spacing: 0.3px;
-
-  &:not(.active):not(:hover) {
-    color: var(--color-gray-600);
-  }
-
-  &.active {
-    font-weight: var(--font-bold);
-    letter-spacing: 0;
-  }
-}
-
-/* Make sure the buttons always takes up the same space by adding an invisible
-  bold version to avoid layout shift. */
-.k-stats-type-display {
-  position: absolute;
-}
-
-.k-stats-type-width {
-  visibility: hidden;
-  letter-spacing: 0;
-  font-weight: var(--font-bold);
+.kirby-stats-type-button:not(.active):not(:hover) {
+  color: var(--color-text-dimmed);
 }
 </style>

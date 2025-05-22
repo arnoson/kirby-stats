@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
-import { kirbyup } from 'kirbyup/plugin'
+import mainView from './views/main-view.vue'
+import percentCell from './components/percent-cell.vue'
 
 declare global {
   interface Window {
@@ -10,8 +11,10 @@ declare global {
 }
 
 window.panel.plugin('arnoson/kirby-stats', {
-  // @ts-ignore
-  components: kirbyup.import('./(views|components)/*.vue'),
+  components: {
+    'k-table-kirby-stats-percent-cell': percentCell,
+    'kirby-stats-main-view': mainView,
+  },
   use: {
     plugin(Vue: Vue) {
       if (import.meta.env.MODE === 'development') {
