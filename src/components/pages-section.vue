@@ -92,7 +92,7 @@ const emptyMessage = computed(() =>
       class="kirby-stats-pages"
       :index="false"
       :columns="{
-        name: { label: 'Page', type: 'stats-page', mobile: true },
+        name: { label: 'Page', type: 'kirby-stats-percent', mobile: true },
         count: { label: capitalize(type), width: '8em', mobile: true },
       }"
       :rows="paginatedRows"
