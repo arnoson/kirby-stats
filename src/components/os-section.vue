@@ -30,17 +30,19 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <k-table
-    class="kirby-stats-os"
-    :index="false"
-    :columns="{
-      name: {
-        label: 'Operating System',
-        type: 'kirby-stats-percent',
-        mobile: true,
-      },
-      visits: { label: 'Visits', width: '8em', mobile: true },
-    }"
-    :rows="rows"
-  />
+  <section class="k-section">
+    <k-table
+      class="kirby-stats-os"
+      :index="false"
+      :columns="{
+        name: {
+          label: 'Operating System',
+          type: 'kirby-stats-percent',
+          mobile: true,
+        },
+        visits: { label: 'Visits', width: '8em', mobile: true },
+      }"
+      :rows="rows"
+    />
+  </section>
 </template>

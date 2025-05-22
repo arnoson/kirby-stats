@@ -2,9 +2,14 @@
 import { Label, LineChart } from 'chartist'
 import 'chartist/dist/index.css'
 import { computed, onMounted, ref, watch } from 'vue'
-import { Stats } from '../types'
+import { Stats, Type } from '../types'
 
-const props = defineProps<{ stats: Stats; type: string }>()
+const props = defineProps<{ stats: Stats; type: Type }>()
+const emit = defineEmits<{ (event: 'update:type', value: Type): void }>()
+const type = computed({
+  get: () => props.type,
+  set: (value) => emit('update:type', value),
+})
 
 let chart: LineChart | undefined
 const chartistContainer = ref(null)
@@ -49,6 +54,13 @@ const processedData = computed(() => {
   return result
 })
 
+const trimData = <T,>(data: Array<T | null>): Array<T | null> => {
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (data[i] !== null) return data.slice(0, i + 1)
+  }
+  return data
+}
+
 const series = computed(() => {
   const data =
     props.type === 'views'
@@ -64,6 +76,14 @@ const series = computed(() => {
 
   return [finishedData, unfinishedData]
 })
+
+const showMaxLabels = (max: number) => (label: Label, index: number) => {
+  const { length } = processedData.value.labels
+  if (length <= max) return label
+  // Only show every n-th label/
+  const n = Math.round(length / max)
+  return index % n === 0 ? label : null
+}
 
 onMounted(() => {
   chart = new LineChart(
@@ -107,27 +127,33 @@ watch(series, (value) => {
     labels: processedData.value.labels,
   })
 })
-
-const showMaxLabels = (max: number) => (label: Label, index: number) => {
-  const { length } = processedData.value.labels
-  if (length <= max) return label
-  // Only show every n-th label/
-  const n = Math.round(length / max)
-  return index % n === 0 ? label : null
-}
-
-const trimData = <T,>(data: Array<T | null>): Array<T | null> => {
-  for (let i = data.length - 1; i >= 0; i--) {
-    if (data[i] !== null) return data.slice(0, i + 1)
-  }
-  return data
-}
 </script>
 
 <template>
-  <div class="kirby-stats-chart k-stat">
-    <div class="kirby-stats-chartist-container" ref="chartistContainer"></div>
-  </div>
+  <section class="k-section">
+    <header class="k-section-header">
+      <k-headline>
+        <button
+          class="kirby-stats-type-button"
+          :class="{ active: type === 'views' }"
+          @click="type = 'views'"
+        >
+          Views
+        </button>
+        /
+        <button
+          class="kirby-stats-type-button"
+          :class="{ active: type === 'visits' }"
+          @click="type = 'visits'"
+        >
+          Visits
+        </button>
+      </k-headline>
+    </header>
+    <div class="kirby-stats-chart k-stat">
+      <div class="kirby-stats-chartist-container" ref="chartistContainer"></div>
+    </div>
+  </section>
 </template>
 
 <style>
@@ -198,5 +224,9 @@ const trimData = <T,>(data: Array<T | null>): Array<T | null> => {
 .kirby-stats-chartist-container {
   padding-top: 2rem;
   height: 400px;
+}
+
+.kirby-stats-type-button:not(.active):not(:hover) {
+  color: var(--color-text-dimmed);
 }
 </style>

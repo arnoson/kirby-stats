@@ -58,18 +58,23 @@ const emptyMessage = computed(() =>
 </script>
 
 <template>
-  <k-table
-    class="kirby-stats-pages"
-    :index="false"
-    :columns="{
-      name: { label: 'Page', type: 'stats-page', mobile: true },
-      count: { label: capitalize(type), width: '8em', mobile: true },
-    }"
-    :rows="paginatedRows"
-    :empty="emptyMessage"
-    :pagination="{ ...pagination, details: true, total: rows.length }"
-    @paginate="paginate"
-  />
+  <section class="k-section">
+    <header class="k-section-header">
+      <k-headline>Pages</k-headline>
+    </header>
+    <k-table
+      class="kirby-stats-pages"
+      :index="false"
+      :columns="{
+        name: { label: 'Page', type: 'stats-page', mobile: true },
+        count: { label: capitalize(type), width: '8em', mobile: true },
+      }"
+      :rows="paginatedRows"
+      :empty="emptyMessage"
+      :pagination="{ ...pagination, details: true, total: rows.length }"
+      @paginate="paginate"
+    />
+  </section>
 </template>
 
 <style scoped>

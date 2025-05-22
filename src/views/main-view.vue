@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Stats } from '../types'
+import { Stats, Type } from '../types'
 import browserSection from '../components/browser-section.vue'
 import pagesSection from '../components/pages-section.vue'
 import osSection from '../components/os-section.vue'
@@ -13,7 +13,7 @@ defineProps<{
   page: string
 }>()
 
-const type = ref<'views' | 'visits'>('views')
+const type = ref<Type>('views')
 
 const intervalSelect = ref(null)
 const toggleIntervalSelect = () => {
@@ -66,28 +66,13 @@ const toggleIntervalSelect = () => {
         </k-button-group>
       </template>
     </k-header>
-    <section class="k-section">
-      <header class="k-section-header">
-        <k-headline>
-          <button
-            class="kirby-stats-type-button"
-            :class="{ active: type === 'views' }"
-            @click="type = 'views'"
-          >
-            Views
-          </button>
-          /
-          <button
-            class="kirby-stats-type-button"
-            :class="{ active: type === 'visits' }"
-            @click="type = 'visits'"
-          >
-            Visits
-          </button>
-        </k-headline>
-      </header>
-      <chart-section :stats="stats" :type="type" :page="labels.page" />
-    </section>
+
+    <chart-section
+      :stats="stats"
+      :page="labels.page"
+      :type="type"
+      @update:type="type = $event"
+    />
 
     <section class="k-section">
       <k-grid style="gap: 1.5rem">
@@ -97,18 +82,11 @@ const toggleIntervalSelect = () => {
               <k-headline>Devices</k-headline>
             </header>
             <browser-section :stats="stats" />
-          </section>
-          <section class="k-section" style="margin-top: 0">
             <os-section :stats="stats" />
           </section>
         </k-column>
         <k-column width="1/2">
-          <section class="k-section">
-            <header class="k-section-header">
-              <k-headline>Pages</k-headline>
-            </header>
-            <pages-section :stats="stats" :urls="urls" :type="type" />
-          </section>
+          <pages-section :stats="stats" :urls="urls" :type="type" />
         </k-column>
       </k-grid>
     </section>
@@ -132,9 +110,5 @@ const toggleIntervalSelect = () => {
       text-align: center;
     }
   }
-}
-
-.kirby-stats-type-button:not(.active):not(:hover) {
-  color: var(--color-text-dimmed);
 }
 </style>

@@ -31,13 +31,15 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <k-table
-    class="k-stats-browsers"
-    :index="false"
-    :columns="{
-      name: { label: 'Browser', type: 'kirby-stats-percent', mobile: true },
-      visits: { label: 'Visits', width: '8em', mobile: true },
-    }"
-    :rows="rows"
-  />
+  <section class="k-section">
+    <k-table
+      class="k-stats-browsers"
+      :index="false"
+      :columns="{
+        name: { label: 'Browser', type: 'kirby-stats-percent', mobile: true },
+        visits: { label: 'Visits', width: '8em', mobile: true },
+      }"
+      :rows="rows"
+    />
+  </section>
 </template>
