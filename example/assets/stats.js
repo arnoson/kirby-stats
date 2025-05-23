@@ -14,11 +14,9 @@
   const sendStats = () => {
     if (statsAreSend) return
 
-    const data = new FormData()
-    data.append('path', location.pathname)
-    const { referrer } = document
-    if (referrer) data.append('referrer', new URL(referrer).host)
-    navigator.sendBeacon('/kirby-stats/hit', data)
+    const path = location.pathname.replace(/^\//, '')
+    fetch(`/kirby-stats/page/${path}`, { keepalive: true })
+    fetch(`/kirby-stats/site`, { keepalive: true })
 
     removeEventListeners()
     statsAreSend = true

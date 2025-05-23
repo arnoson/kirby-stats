@@ -207,6 +207,7 @@ class Counters {
           'time' => $time,
           'label' => Interval::label($groupInterval, $time),
           'paths' => [],
+          'site' => null,
         ];
 
         $path = $path === '/' ? '/home' : $path;

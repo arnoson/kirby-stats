@@ -4,12 +4,18 @@ use arnoson\KirbyStats\KirbyStats;
 
 return [
   [
-    'pattern' => 'kirby-stats/hit',
-    'method' => 'POST',
+    'pattern' => 'kirby-stats/site',
+    'method' => 'GET',
     'action' => function () {
-      $path = get('path');
-      $referrer = get('referrer');
-      (new KirbyStats())->handle($path, $referrer);
+      (new KirbyStats())->processRequest();
+      return ['status' => 'ok'];
+    },
+  ],
+  [
+    'pattern' => 'kirby-stats/page/(:all?)',
+    'method' => 'GET',
+    'action' => function ($path = null) {
+      (new KirbyStats())->processRequest($path ? "/$path" : '/');
       return ['status' => 'ok'];
     },
   ],
