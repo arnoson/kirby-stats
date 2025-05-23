@@ -4,5 +4,7 @@
 **/media
 **/accounts
 composer.lock
+.htaccess
+.prettierignore
 /index.js
 /index.css

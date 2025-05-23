@@ -30,5 +30,11 @@
       "getkirby/composer-installer": true,
       "pestphp/pest-plugin": true
     }
+  },
+  "scripts": {
+    "start": [
+      "Composer\\Config::disableProcessTimeout",
+      "@php -S localhost:8000 -t ./example/ ./example/router.php"
+    ]
   }
 }
