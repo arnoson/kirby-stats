@@ -81,7 +81,7 @@ class Counters {
   public function increase(
     string $path,
     array $counterNames,
-    DateTimeImmutable $date = null
+    ?DateTimeImmutable $date = null
   ): bool {
     $sql = $this->database->sql();
     $date ??= new DateTimeImmutable();
@@ -110,7 +110,7 @@ class Counters {
     int $interval,
     DateTimeImmutable $from,
     DateTimeImmutable $to,
-    string $path = null
+    ?string $path = null
   ): array {
     $where = '"time" BETWEEN ? AND ?';
     $bindings = [$from->getTimestamp(), $to->getTimestamp()];

@@ -6,7 +6,6 @@ use DateTime;
 use DateTimeImmutable;
 use Kirby\Database\Database;
 use Kirby\Filesystem\F;
-use Kirby\Toolkit\Str;
 
 class KirbyStats {
   protected Counters $stats;
@@ -37,8 +36,8 @@ class KirbyStats {
 
   public function handle(
     string $path,
-    string|null $referrer,
-    DateTimeImmutable $date = null
+    ?string $referrer = null,
+    ?DateTimeImmutable $date = null
   ) {
     if ($debug = option('arnoson.kirby-stats.debug')) {
       $startTime = microtime(true);
@@ -92,7 +91,7 @@ class KirbyStats {
     int $interval,
     DateTimeImmutable $from,
     DateTimeImmutable $to,
-    string $path = null
+    ?string $path = null
   ): array {
     return $this->stats->data($interval, $from, $to, $path);
   }

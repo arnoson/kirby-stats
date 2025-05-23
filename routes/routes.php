@@ -1,7 +1,6 @@
 <?php
 
 use arnoson\KirbyStats\KirbyStats;
-use Kirby\Toolkit\Str;
 
 return [
   [

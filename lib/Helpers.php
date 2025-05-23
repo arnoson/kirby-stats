@@ -3,7 +3,7 @@
 namespace arnoson\KirbyStats;
 
 class Helpers {
-  static function pathTitle(string $path = null) {
+  static function pathTitle(?string $path = null) {
     if ($page = page($path)) {
       $parts = [$page->title()->value()];
       while ($page = $page->parent()) {
@@ -13,9 +13,7 @@ class Helpers {
     }
 
     if ($path == '/home') {
-      return page(option('home', 'home'))
-        ->title()
-        ->value();
+      return page(option('home', 'home'))->title()->value();
     }
 
     return $path;

@@ -10,7 +10,7 @@ class Analyzer {
   /**
    * Analyze the current request.
    */
-  public function analyze(string|null $referrer): array {
+  public function analyze(?string $referrer = null): array {
     $host = strtok($_SERVER['HTTP_HOST'], ':');
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
