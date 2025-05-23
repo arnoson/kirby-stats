@@ -36,7 +36,10 @@ defineProps<{
 }
 
 tr:hover .kirby-stats-percent-bar {
-  background-color: light-dark(var(--color-blue-300), var(--color-blue-750));
+  background-color: light-dark(
+    var(--color-blue-300),
+    var(--color-blue-750, var(--color-blue-800)) /* 750 tint requires Kirby 5 */
+  );
 }
 
 .kirby-stats-percent-wrapper {

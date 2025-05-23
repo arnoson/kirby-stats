@@ -160,7 +160,7 @@ watch(series, (value) => {
 .kirby-stats-chart {
   --kirby-stats-color-chart: light-dark(
     var(--color-blue),
-    var(--color-blue-650)
+    var(--color-blue-650, var(--color-blue-700)) /* 650 tint requires Kirby 5 */
   );
 
   overflow: hidden;
