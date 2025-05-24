@@ -7,7 +7,7 @@ return [
     'pattern' => 'kirby-stats/site',
     'method' => 'GET',
     'action' => function () {
-      (new KirbyStats())->processRequest();
+      KirbyStats::processRequest();
       return ['status' => 'ok'];
     },
   ],
@@ -15,7 +15,7 @@ return [
     'pattern' => 'kirby-stats/page/(:all?)',
     'method' => 'GET',
     'action' => function ($path = null) {
-      (new KirbyStats())->processRequest($path ? "/$path" : '/');
+      KirbyStats::processRequest($path ? "/$path" : '/');
       return ['status' => 'ok'];
     },
   ],

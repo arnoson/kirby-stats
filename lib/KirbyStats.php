@@ -11,7 +11,7 @@ use Kirby\Database\Database;
 use Kirby\Filesystem\F;
 
 class KirbyStats {
-  protected Counters $stats;
+  protected static ?Counters $stats = null;
 
   protected const BROWSERS = [
     'Opera',
@@ -24,9 +24,13 @@ class KirbyStats {
 
   protected const OS = ['Windows', 'Mac', 'Linux', 'Android', 'iOS'];
 
-  public function __construct($interval = null) {
+  protected static function stats() {
+    if (static::$stats) {
+      return static::$stats;
+    }
+
     $counters = array_merge(['views', 'visits'], self::BROWSERS, self::OS);
-    $interval ??= Interval::fromName(
+    $interval = Interval::fromName(
       option('arnoson.kirby-stats.interval', 'hour')
     );
     $database = new Database([
@@ -34,10 +38,11 @@ class KirbyStats {
       'database' => option('arnoson.kirby-stats.sqlite'),
     ]);
 
-    $this->stats = new Counters($database, 'Stats', $counters, $interval);
+    static::$stats = new Counters($database, 'Stats', $counters, $interval);
+    return static::$stats;
   }
 
-  public function processRequest(
+  public static function processRequest(
     ?string $path = 'site',
     ?DateTimeImmutable $date = null
   ) {
@@ -49,7 +54,7 @@ class KirbyStats {
       return;
     }
 
-    $info = $this->getDeviceInfo();
+    $info = static::getDeviceInfo();
     if ($info['bot']) {
       return;
     }
@@ -97,7 +102,7 @@ class KirbyStats {
       }
     }
 
-    $this->stats->increase($path, $incrementCounters, $date);
+    static::stats()->increase($path, $incrementCounters, $date);
 
     if ($debug) {
       $duration = microtime(true) - $startTime . 'μs';
@@ -112,7 +117,7 @@ class KirbyStats {
     }
   }
 
-  protected function getDeviceInfo() {
+  protected static function getDeviceInfo() {
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
     $device = new DeviceDetector($userAgent);
@@ -126,29 +131,29 @@ class KirbyStats {
 
     return [
       'bot' => $isBot,
-      'browser' => $this->toColumnName($browser),
-      'os' => $this->toColumnName($os),
+      'browser' => static::toColumnName($browser),
+      'os' => static::toColumnName($os),
     ];
   }
 
-  protected function toColumnName(string $text) {
+  protected static function toColumnName(string $text) {
     return preg_replace('/[^a-zA-Z0-9_]/', '', $text);
   }
 
-  public function data(
+  public static function data(
     int $interval,
     DateTimeImmutable $from,
     DateTimeImmutable $to,
     ?string $path = null
   ): array {
-    return $this->stats->data($interval, $from, $to, $path);
+    return static::stats()->data($interval, $from, $to, $path);
   }
 
-  public function getFirstTime() {
-    return $this->stats->getFirstTime();
+  public static function getFirstTime() {
+    return static::stats()->getFirstTime();
   }
 
-  public function remove(): bool {
-    return $this->stats->remove();
+  public static function remove(): bool {
+    return static::stats()->remove();
   }
 }

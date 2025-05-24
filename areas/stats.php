@@ -4,7 +4,7 @@ namespace arnoson\KirbyStats;
 use DateTimeImmutable;
 use Kirby\Toolkit\A;
 
-function path(string $slug = null) {
+function path(?string $slug = null) {
   if (!$slug) {
     return;
   }
@@ -38,7 +38,7 @@ function statsView(array $data) {
   ];
 }
 
-function statsViewLatest(string $range, string $page = null) {
+function statsViewLatest(string $range, ?string $page = null) {
   $to = (new DateTimeImmutable())->modify('tomorrow');
   [$modifier, $label, $interval] = match ($range) {
     'today' => ['-1 day', 'Today', Interval::HOUR],
@@ -47,16 +47,21 @@ function statsViewLatest(string $range, string $page = null) {
   };
   $from = $to->modify($modifier);
 
+  // For a single day view, users can navigate using prev/next buttons.
+  // However, for ranges like "last 7 days" or "last 30 days", navigation
+  // isn't possible since these are rolling windows rather than fixed intervals
   if ($range === 'today') {
     // Overwrite statsViewInterval's date label.
     $labels = ['date' => $label];
-    return statsViewInterval(Interval::DAY, $from, null, $labels);
+    return statsViewInterval(Interval::DAY, $from, $page, $labels);
   }
 
   return statsView([
-    'stats' => (new KirbyStats())->data($interval, $from, $to, path($page)),
-    'page' => "stats/$range/page/{{slug}}",
-    'urls' => ['page' => "stats/$range/page/{{slug}}"],
+    'stats' => KirbyStats::data($interval, $from, $to, path($page)),
+    'urls' => [
+      'withPage' => "stats/$range/page/{{slug}}",
+      'withoutPage' => "stats/$range",
+    ],
     'labels' => ['date' => $label],
     'page' => $page,
   ]);
@@ -68,13 +73,12 @@ function statsViewInterval(
   $page = null,
   $labels = []
 ) {
-  $stats = new KirbyStats();
   $now = new DateTimeImmutable();
   $current = Interval::startOf($interval, $date);
   $last = Interval::startOfLast($interval, $date);
   $next = Interval::startOfNext($interval, $date);
 
-  $hasLast = $date > $stats->getFirstTime();
+  $hasLast = $date > KirbyStats::getFirstTime();
   $hasNext = $next < $now;
   $format = $interval === 'month' ? 'Y-m' : 'Y-m-d';
   $path = $page ? ($page === 'home' ? '/' : "/$page") : null;
@@ -89,21 +93,27 @@ function statsViewInterval(
     default => Interval::DAY,
   };
 
+  $pageUrlParam = $page ? "/page/$page" : '';
+
   return statsView([
-    'stats' => $stats->data($dataInterval, $from, $to, $path),
+    'stats' => KirbyStats::data($dataInterval, $from, $to, $path),
     'labels' => A::merge(
       ['date' => Interval::label($interval, $current)],
       $labels
     ),
     'urls' => [
-      'page' => "stats/$intervalName/{$current->format($format)}/page/{{slug}}",
+      'withPage' => "stats/$intervalName/{$current->format(
+        $format
+      )}/page/{{slug}}",
+      'withoutPage' => "stats/$intervalName/{$current->format($format)}",
       'last' => $hasLast
-        ? "stats/$intervalName/{$last->format($format)}"
+        ? "stats/$intervalName/{$last->format($format)}$pageUrlParam"
         : null,
       'next' => $hasNext
-        ? "stats/$intervalName/{$next->format($format)}"
+        ? "stats/$intervalName/{$next->format($format)}$pageUrlParam"
         : null,
     ],
+    'page' => $page,
   ]);
 }
 
