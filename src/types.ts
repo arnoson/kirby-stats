@@ -13,9 +13,9 @@ export type Browser = (typeof browsers)[number]
 
 export type OS = (typeof os)[number]
 
-export type Type = 'views' | 'visits'
+export type Type = 'visitors' | 'visits' | 'views'
 
-export type StatsCounters = Record<Type | Browser | OS, number>
+export type StatsCounters = Record<'visits' | 'views' | Browser | OS, number>
 
 export type Interval = 'hour' | 'day' | 'week' | 'month' | 'year'
 

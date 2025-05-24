@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Stats, Type } from '../types'
 import browserSection from '../components/browser-section.vue'
 import pagesSection from '../components/pages-section.vue'
@@ -7,31 +7,75 @@ import osSection from '../components/os-section.vue'
 import chartSection from '../components/chart-section.vue'
 import dateNavigation from '../components/date-navigation.vue'
 
-defineProps<{
+const props = defineProps<{
   stats: Stats
   urls: Record<string, string>
   labels: Record<string, string>
   page: string
 }>()
 
-const type = ref<Type>('views')
+const selectedType = ref<Type>('visitors')
+const type = computed(() => {
+  // Visitors can only be stored on the whole site, not per page.
+  if (props.page && selectedType.value === 'visitors') return 'visits'
+  return selectedType.value
+})
 </script>
 
 <template>
   <k-panel-inside class="kirby-stats-main-view">
     <k-header>
-      Stats {{ page ? ` for ${labels.page}` : '' }}
-      <template #buttons>
+      Stats
+      <template #buttons class="fu">
+        <k-tag
+          v-if="page"
+          style="align-self: center"
+          removable
+          @remove="
+            // @ts-ignore
+            $go(props.urls.withoutPage)
+          "
+        >
+          Page: <b>{{ labels.page }}</b>
+        </k-tag>
         <date-navigation :urls="urls" :labels="labels" />
       </template>
     </k-header>
 
-    <chart-section
-      :stats="stats"
-      :page="labels.page"
-      :type="type"
-      @update:type="type = $event"
-    />
+    <div class="k-tabs" style="margin-bottom: var(--spacing-6)">
+      <div class="k-tabs-tab" v-if="!page">
+        <k-button
+          variant="dimmed"
+          class="k-tab-button"
+          :current="type === 'visitors'"
+          @click="selectedType = 'visitors'"
+        >
+          Visitors
+        </k-button>
+      </div>
+      <div class="k-tabs-tab">
+        <k-button
+          variant="dimmed"
+          class="k-tab-button"
+          :current="type === 'visits'"
+          @click="selectedType = 'visits'"
+        >
+          Visits
+        </k-button>
+      </div>
+      <div class="k-tabs-tab">
+        <k-button
+          variant="dimmed"
+          class="k-tab-button"
+          :current="type === 'views'"
+          @click="selectedType = 'views'"
+        >
+          Views
+        </k-button>
+      </div>
+    </div>
+
+    <chart-section :stats="stats" :page="page" :type="type" />
 
     <section class="k-section">
       <k-grid style="gap: 1.5rem">
@@ -48,7 +92,12 @@ const type = ref<Type>('views')
           </section>
         </k-column>
         <k-column width="1/2">
-          <pages-section :stats="stats" :urls="urls" :type="type" />
+          <pages-section
+            :stats="stats"
+            :urls="urls"
+            :type="type"
+            :page="page"
+          />
         </k-column>
       </k-grid>
     </section>

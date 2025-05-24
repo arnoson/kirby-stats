@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   value: string
-  row: { percent: number }
+  row: { percent: number; url?: string }
 }>()
 </script>
 
@@ -14,7 +14,8 @@ defineProps<{
       ></div>
     </div>
     <div class="kirby-stats-percent-text k-text-field-preview">
-      {{ value }}
+      <k-link v-if="row.url" :to="row.url">{{ value }}</k-link>
+      <span v-else>{{ value }}</span>
     </div>
   </div>
 </template>
@@ -27,18 +28,23 @@ defineProps<{
 .kirby-stats-percent-text {
   /* Make sure text is above the bar. */
   position: relative;
+
+  a:hover {
+    text-decoration: underline;
+  }
 }
 
 .kirby-stats-percent-bar {
   height: 100%;
   border-radius: var(--rounded);
-  background-color: light-dark(var(--color-blue-200), var(--color-blue-700));
+  background-color: light-dark(var(--color-blue-300), var(--color-blue-700));
 }
 
 tr:hover .kirby-stats-percent-bar {
+  /* Color tints in increments of 50 are only available since Kirby 5 */
   background-color: light-dark(
-    var(--color-blue-300),
-    var(--color-blue-750, var(--color-blue-800)) /* 750 tint requires Kirby 5 */
+    var(--color-blue-350, var(--color-blue-400)),
+    var(--color-blue-750, var(--color-blue-800))
   );
 }
 

@@ -4,54 +4,59 @@ import 'chartist/dist/index.css'
 import { computed, onMounted, ref, watch } from 'vue'
 import { Stats, Type } from '../types'
 
-const props = defineProps<{ stats: Stats; type: Type }>()
+const props = defineProps<{ stats: Stats; type: Type; page: string }>()
 const emit = defineEmits<{ (event: 'update:type', value: Type): void }>()
-const type = computed({
-  get: () => props.type,
-  set: (value) => emit('update:type', value),
-})
 
 let chart: LineChart | undefined
 const chartistContainer = ref(null)
 
-const processedData = computed(() => {
-  const result = {
-    views: [] as (number | null)[],
-    visits: [] as (number | null)[],
-    labels: [] as string[],
-    totalViews: 0,
-    totalVisits: 0,
-    isFinished: true,
-  }
+const data = computed(() => {
+  const data: (number | null)[] = []
+  const labels: string[] = []
+  let isFinished = true
 
   for (const { label, paths, missing, now } of Object.values(props.stats)) {
-    result.labels.push(label)
+    labels.push(label)
     if (missing) {
-      result.views.push(null)
-      result.visits.push(null)
+      data.push(null)
       continue
     }
-
     // If (the last) entry's time interval is not yet finished we'll set
     // a flag to render a dashed line, indicating that the counters are not
     // final yet.
-    if (now) result.isFinished = false
+    if (now) isFinished = false
 
-    const [views, visits] = Object.values(paths).reduce(
-      ([views, visits], { counters }) => [
-        views + counters.views,
-        visits + counters.visits,
-      ],
-      [0, 0],
-    )
+    const { type, page } = props
+    const path = page === 'home' ? '/' : page ? `/${page}` : 'site'
+    let value: number | null = null
 
-    result.views.push(views)
-    result.visits.push(visits)
-    result.totalViews += views
-    result.totalVisits += visits
+    if (path === 'site') {
+      // Handle site-wide statistics
+      if (type === 'visitors') {
+        value = paths.site?.counters.visits ?? 0
+      } else {
+        // Sum up all page visits/views
+        value = Object.entries(paths)
+          .filter(([path]) => path.startsWith('/'))
+          .reduce((sum, [, data]) => sum + data.counters[type], 0)
+      }
+    } else if (props.type !== 'visitors') {
+      // Handle individual page statistics
+      value = paths[path]?.counters[props.type] ?? 0
+    }
+
+    data.push(value)
   }
 
-  return result
+  if (isFinished) return { labels, series: [data] }
+
+  const trimmedData = trimData(data)
+  const finishedData = trimmedData.slice(0, -1)
+  const unfinishedData = trimmedData.map((value, index) =>
+    index < finishedData.length - 1 ? null : value,
+  )
+
+  return { labels, series: [finishedData, unfinishedData] }
 })
 
 const trimData = <T,>(data: Array<T | null>): Array<T | null> => {
@@ -61,24 +66,8 @@ const trimData = <T,>(data: Array<T | null>): Array<T | null> => {
   return data
 }
 
-const series = computed(() => {
-  const data =
-    props.type === 'views'
-      ? processedData.value.views
-      : processedData.value.visits
-  if (processedData.value.isFinished) return [data]
-
-  const trimmedData = trimData(data)
-  const finishedData = trimmedData.slice(0, -1)
-  const unfinishedData = trimmedData.map((value, index) =>
-    index < finishedData.length - 1 ? null : value,
-  )
-
-  return [finishedData, unfinishedData]
-})
-
 const showMaxLabels = (max: number) => (label: Label, index: number) => {
-  const { length } = processedData.value.labels
+  const { length } = data.value.labels
   if (length <= max) return label
   // Only show every n-th label/
   const n = Math.round(length / max)
@@ -88,10 +77,7 @@ const showMaxLabels = (max: number) => (label: Label, index: number) => {
 onMounted(() => {
   chart = new LineChart(
     chartistContainer.value,
-    {
-      series: series.value,
-      labels: processedData.value.labels,
-    },
+    data.value,
     {
       low: 0,
       fullWidth: true,
@@ -121,35 +107,11 @@ onMounted(() => {
   )
 })
 
-watch(series, (value) => {
-  chart?.update({
-    series: value,
-    labels: processedData.value.labels,
-  })
-})
+watch(data, (value) => chart?.update(value))
 </script>
 
 <template>
   <section class="k-section">
-    <header class="k-section-header">
-      <k-headline>
-        <button
-          class="kirby-stats-type-button"
-          :class="{ active: type === 'views' }"
-          @click="type = 'views'"
-        >
-          Views
-        </button>
-        /
-        <button
-          class="kirby-stats-type-button"
-          :class="{ active: type === 'visits' }"
-          @click="type = 'visits'"
-        >
-          Visits
-        </button>
-      </k-headline>
-    </header>
     <div class="kirby-stats-chart k-stat">
       <div class="kirby-stats-chartist-container" ref="chartistContainer"></div>
     </div>
@@ -158,9 +120,10 @@ watch(series, (value) => {
 
 <style>
 .kirby-stats-chart {
+  /* Color tints in increments of 50 are only available since Kirby 5 */
   --kirby-stats-color-chart: light-dark(
     var(--color-blue),
-    var(--color-blue-650, var(--color-blue-700)) /* 650 tint requires Kirby 5 */
+    var(--color-blue-650, var(--color-blue-700))
   );
 
   overflow: hidden;

@@ -43,6 +43,7 @@ const rows = computed(() => {
         visits: { label: 'Visits', width: '8em', mobile: true },
       }"
       :rows="rows"
+      empty="No data"
     />
   </section>
 </template>

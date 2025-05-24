@@ -13,6 +13,13 @@ const props = defineProps<{
 const isSearching = ref(false)
 const searchQuery = ref('')
 
+// Pages only store visits and views. Visitors are defined as site visits,
+// which we can't display here.
+const pagesType = computed(() => {
+  if (props.type === 'visitors') return 'visits'
+  return props.type
+})
+
 type Row = { name: string; count: number; percent: number; url: string }
 const rows = computed(() => {
   let total = 0
@@ -21,9 +28,12 @@ const rows = computed(() => {
   for (const { paths, missing } of Object.values(props.stats)) {
     if (missing) continue
     for (const [path, { counters, title }] of Object.entries(paths)) {
+      // Filter out non-page stats like `site`.
+      if (!path.startsWith('/')) continue
+
       const name = title || path
       const slug = slugifyPath(path)
-      const url = props.urls.page.replace('{{slug}}', slug)
+      const url = props.urls.withPage?.replace('{{slug}}', slug)
       data[path] ??= { name, count: 0, percent: 0, url }
       const value = props.type === 'views' ? counters.views : counters.visits
       data[path].count += value
@@ -62,8 +72,8 @@ const paginate = ({ page }: { page: number }) => {
 
 const emptyMessage = computed(() =>
   props.page
-    ? `No ${props.type} for ${props.page}`
-    : `No ${props.type === 'views' ? 'viewed' : 'visited'} pages`,
+    ? `No ${pagesType.value} for ${props.page}`
+    : `No ${pagesType.value === 'views' ? 'viewed' : 'visited'} pages`,
 )
 </script>
 
@@ -94,7 +104,7 @@ const emptyMessage = computed(() =>
       :index="false"
       :columns="{
         name: { label: 'Page', type: 'kirby-stats-percent', mobile: true },
-        count: { label: capitalize(type), width: '8em', mobile: true },
+        count: { label: capitalize(pagesType), width: '8em', mobile: true },
       }"
       :rows="paginatedRows"
       :empty="emptyMessage"

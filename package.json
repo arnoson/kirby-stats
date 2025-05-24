@@ -26,6 +26,7 @@
     "@prettier/plugin-php": "^0.22.4",
     "bumpp": "^10.1.1",
     "kirbyup": "^3.3.0",
+    "kirbyuse": "^0.12.1",
     "lint-staged": "^16.0.0",
     "prettier": "^3.5.3",
     "simple-git-hooks": "^2.13.0"
