@@ -6,5 +6,6 @@
 composer.lock
 .htaccess
 .prettierignore
+.gitignore
 /index.js
 /index.css

@@ -1,0 +1,24 @@
+title: Blog Post
+preset: page
+
+status:
+  draft: Draft
+  unlisted: In Review
+  listed: Published
+
+fields:
+  date:
+    type: date
+    width: 1/2
+  category:
+    type: select
+    options:
+      tutorial: Tutorial
+      news: News
+      guide: Guide
+      tips: Tips
+      case-study: Case Study
+    width: 1/2
+  text:
+    type: textarea
+    size: large

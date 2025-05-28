@@ -5,7 +5,7 @@ use arnoson\KirbyStats\KirbyStats;
 class KirbyStatsSeed extends KirbyStats {
   public static function seed() {
     $pages = kirby()->site()->index();
-    $from = (new DateTimeImmutable())->modify('-1 month');
+    $from = (new DateTimeImmutable())->modify('-1 day');
     $now = new DateTimeImmutable();
     $interval = new \DateInterval('PT1H'); // Hour interval
     $period = new \DatePeriod($from, $interval, $now);
@@ -30,7 +30,7 @@ class KirbyStatsSeed extends KirbyStats {
         $browser = self::BROWSERS[array_rand(self::BROWSERS)];
         $os = self::OS[array_rand(self::OS)];
         static::stats()->increase(
-          'site',
+          site()->uuid()->toString(),
           ['views', 'visits', $browser, $os],
           $date
         );
@@ -40,9 +40,19 @@ class KirbyStatsSeed extends KirbyStats {
         $visitedPages = [];
 
         for ($i = 0; $i < $pagesToVisit; $i++) {
-          // Select random page
-          $page = $pages->nth(rand(0, $pages->count() - 1));
-          $path = $page->isHomePage() ? '/' : "/{$page->id()}";
+          // Select random page (make home and about more likely)
+          $weight = rand(1, 12);
+          if ($weight <= 5) {
+            $page = page('home');
+          } elseif ($weight <= 10) {
+            $page = page('about');
+          } else {
+            $page = kirby()
+              ->site()
+              ->index()
+              ->nth(rand(0, $pages->count() - 1));
+          }
+          $path = $page->uuid()->toString();
 
           // First view of this page by this visitor
           if (!in_array($path, $visitedPages)) {
@@ -66,9 +76,10 @@ class KirbyStatsSeed extends KirbyStats {
 }
 
 return [
-  'description' => 'Create dummy data for Kirby Stats development',
+  'description' => 'Create dummy data for testing',
   'args' => [],
   'command' => static function ($cli): void {
+    $cli->out('Creating seed (this might take a while)...');
     KirbyStatsSeed::seed();
     $cli->success('Seed created!');
   },
