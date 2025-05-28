@@ -7,6 +7,7 @@ use DateTime;
 use DateTimeImmutable;
 use Kirby\Database\Database;
 use Kirby\Toolkit\A;
+use Kirby\Toolkit\Str;
 
 class Counters {
   private Database $database;
@@ -137,6 +138,10 @@ class Counters {
             $array[$key] = intval($value);
           }
         }
+        // Resolve uuids (used in the frontend).
+        if (Str::startsWith($array['path'], 'page://')) {
+          $array['pageId'] = page($array['path'])->id();
+        }
         return $array;
       });
 
@@ -207,7 +212,6 @@ class Counters {
           'time' => $time,
           'label' => Interval::label($groupInterval, $time),
           'paths' => [],
-          'site' => null,
         ];
 
         $path = $path === '/' ? '/home' : $path;
@@ -216,9 +220,14 @@ class Counters {
         $group[$time]['paths'][$path] = $existing
           ? [
             'title' => $existing['title'],
+            'pageId' => $existing['pageId'],
             'counters' => $this->sumCounters($existing['counters'], $counters),
           ]
-          : ['title' => Helpers::pathTitle($path), 'counters' => $counters];
+          : [
+            'title' => Helpers::pathTitle($path),
+            'counters' => $counters,
+            'pageId' => $row['pageId'] ?? null,
+          ];
       }
     }
 

@@ -24,7 +24,16 @@ export type StatsEntry = {
   label: string
   missing?: boolean
   now?: boolean
-  paths: Record<string, { title: string; counters: StatsCounters }>
+  paths: Record<
+    string,
+    { counters: StatsCounters; pageId?: string; title: string }
+  >
 }
 
 export type Stats = Record<StatsEntry['time'], StatsEntry>
+
+export type Page = {
+  title: string
+  uuid?: string
+  id: string
+}

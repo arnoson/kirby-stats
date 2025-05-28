@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Stats, Type } from '../types'
+import { Page, Stats, Type } from '../types'
 import browserSection from '../components/browser-section.vue'
 import pagesSection from '../components/pages-section.vue'
 import osSection from '../components/os-section.vue'
@@ -11,7 +11,7 @@ const props = defineProps<{
   stats: Stats
   urls: Record<string, string>
   labels: Record<string, string>
-  page: string
+  page: Page
 }>()
 
 const selectedType = ref<Type>('visitors')
@@ -36,7 +36,7 @@ const type = computed(() => {
             $go(props.urls.withoutPage)
           "
         >
-          Page: <b>{{ labels.page }}</b>
+          Page: <b>{{ page.title ?? page.id }}</b>
         </k-tag>
         <date-navigation :urls="urls" :labels="labels" />
       </template>
@@ -97,6 +97,7 @@ const type = computed(() => {
             :urls="urls"
             :type="type"
             :page="page"
+            :labels="labels"
           />
         </k-column>
       </k-grid>

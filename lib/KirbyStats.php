@@ -43,7 +43,7 @@ class KirbyStats {
   }
 
   public static function processRequest(
-    ?string $path = 'site',
+    string $path,
     ?DateTimeImmutable $date = null
   ) {
     if ($debug = option('arnoson.kirby-stats.debug')) {

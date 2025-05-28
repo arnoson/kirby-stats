@@ -2,8 +2,15 @@
 
 namespace arnoson\KirbyStats;
 
+use Kirby\Toolkit\Str;
+
 class Helpers {
   static function pathTitle(?string $path = null) {
+    if (!$path) {
+      return null;
+    }
+    $path = Str::replace($path, '+', '/');
+
     if ($page = page($path)) {
       $parts = [$page->title()->value()];
       while ($page = $page->parent()) {

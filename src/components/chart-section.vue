@@ -2,9 +2,9 @@
 import { Label, LineChart } from 'chartist'
 import 'chartist/dist/index.css'
 import { computed, onMounted, ref, watch } from 'vue'
-import { Stats, Type } from '../types'
+import { Page, Stats, Type } from '../types'
 
-const props = defineProps<{ stats: Stats; type: Type; page: string }>()
+const props = defineProps<{ stats: Stats; type: Type; page?: Page }>()
 const emit = defineEmits<{ (event: 'update:type', value: Type): void }>()
 
 let chart: LineChart | undefined
@@ -27,21 +27,21 @@ const data = computed(() => {
     if (now) isFinished = false
 
     const { type, page } = props
-    const path = page === 'home' ? '/' : page ? `/${page}` : 'site'
     let value: number | null = null
 
-    if (path === 'site') {
+    if (!page) {
       // Handle site-wide statistics
       if (type === 'visitors') {
-        value = paths.site?.counters.visits ?? 0
+        value = paths['site://']?.counters.visits ?? 0
       } else {
         // Sum up all page visits/views
         value = Object.entries(paths)
-          .filter(([path]) => path.startsWith('/'))
+          .filter(([path]) => !path.startsWith('site://'))
           .reduce((sum, [, data]) => sum + data.counters[type], 0)
       }
     } else if (props.type !== 'visitors') {
-      // Handle individual page statistics
+      // Handle individual page statistics (visitors is only supported for site)
+      const path = page.uuid ?? page.id
       value = paths[path]?.counters[props.type] ?? 0
     }
 

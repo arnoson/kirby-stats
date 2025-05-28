@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Stats } from '../types'
+import { Page, Stats } from '../types'
 import { capitalize, slugifyPath } from '../utils'
 
 const props = defineProps<{
   stats: Stats
   urls: Record<string, string>
+  labels: Record<string, string>
   type: string
-  page?: string
+  page?: Page
 }>()
 
 const isSearching = ref(false)
@@ -27,12 +28,11 @@ const rows = computed(() => {
 
   for (const { paths, missing } of Object.values(props.stats)) {
     if (missing) continue
-    for (const [path, { counters, title }] of Object.entries(paths)) {
-      // Filter out non-page stats like `site`.
-      if (!path.startsWith('/')) continue
+    for (const [path, { counters, pageId, title }] of Object.entries(paths)) {
+      if (!path.startsWith('page://')) continue
 
       const name = title || path
-      const slug = slugifyPath(path)
+      const slug = slugifyPath(pageId ?? path)
       const url = props.urls.withPage?.replace('{{slug}}', slug)
       data[path] ??= { name, count: 0, percent: 0, url }
       const value = props.type === 'views' ? counters.views : counters.visits
@@ -69,12 +69,6 @@ const paginatedRows = computed(() => {
 const paginate = ({ page }: { page: number }) => {
   pagination.value.page = page
 }
-
-const emptyMessage = computed(() =>
-  props.page
-    ? `No ${pagesType.value} for ${props.page}`
-    : `No ${pagesType.value === 'views' ? 'viewed' : 'visited'} pages`,
-)
 </script>
 
 <template>
@@ -107,7 +101,7 @@ const emptyMessage = computed(() =>
         count: { label: capitalize(pagesType), width: '8em', mobile: true },
       }"
       :rows="paginatedRows"
-      :empty="emptyMessage"
+      empty="No data"
       :pagination="{ ...pagination, details: true, total: filteredRows.length }"
       @paginate="paginate"
     />
