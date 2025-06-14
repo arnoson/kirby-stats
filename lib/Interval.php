@@ -5,20 +5,22 @@ namespace arnoson\KirbyStats;
 use DateInterval;
 use DateTimeImmutable;
 
-class Interval {
-  const HOUR = 0;
-  const DAY = 1;
-  const WEEK = 2;
-  const MONTH = 3;
-  const YEAR = 4;
+enum Interval: int {
+  case HOUR = 0;
+  case DAY = 1;
+  case WEEK = 2;
+  case MONTH = 3;
+  case YEAR = 4;
 
-  private static function parseDate(DateTimeImmutable|int $date) {
+  private static function parseDate(
+    DateTimeImmutable|int $date
+  ): DateTimeImmutable {
     return is_a($date, 'DateTimeImmutable')
       ? $date
       : (new DateTimeImmutable())->setTimestamp($date);
   }
 
-  static function fromName(string $name): int {
+  public static function fromName(string $name): self {
     return match ($name) {
       'hour' => self::HOUR,
       'day' => self::DAY,
@@ -28,8 +30,8 @@ class Interval {
     };
   }
 
-  static function name(int $interval): string {
-    return match ($interval) {
+  public function name(): string {
+    return match ($this) {
       self::HOUR => 'hour',
       self::DAY => 'day',
       self::WEEK => 'week',
@@ -38,41 +40,46 @@ class Interval {
     };
   }
 
-  static function interval(int $interval): DateInterval {
-    $unit = self::name($interval);
-    return DateInterval::createFromDateString("1 $unit");
+  public function interval(): DateInterval {
+    return match ($this) {
+      self::HOUR => new DateInterval('PT1H'),
+      self::DAY => new DateInterval('P1D'),
+      self::WEEK => new DateInterval('P7D'),
+      self::MONTH => new DateInterval('P1M'),
+      self::YEAR => new DateInterval('P1Y'),
+    };
   }
 
-  static function label(int $interval, DateTimeImmutable|int $date) {
-    $format = match ($interval) {
-      Interval::HOUR => 'H:i',
-      Interval::DAY => 'd M',
-      Interval::WEEK => 'd M',
-      Interval::MONTH => 'M Y',
-      Interval::YEAR => 'Y',
+  public function label(DateTimeImmutable|int $date): string {
+    $format = match ($this) {
+      self::HOUR => 'H:i',
+      self::DAY => 'd M',
+      self::WEEK => 'd M',
+      self::MONTH => 'M Y',
+      self::YEAR => 'Y',
     };
     return self::parseDate($date)->format($format);
   }
 
-  static function slug(int $interval, DateTimeImmutable|int $date) {
-    $format = match ($interval) {
-      Interval::HOUR => 'H-i',
-      Interval::DAY => 'Y-m-d',
-      Interval::WEEK => 'Y-m-d',
-      Interval::MONTH => 'Y-m',
-      Interval::YEAR => 'Y',
+  public function slug(DateTimeImmutable|int $date): string {
+    $format = match ($this) {
+      self::HOUR => 'H-i',
+      self::DAY => 'Y-m-d',
+      self::WEEK => 'Y-m-d',
+      self::MONTH => 'Y-m',
+      self::YEAR => 'Y',
     };
     return self::parseDate($date)->format($format);
   }
 
-  static function endOf(int $interval, DateTimeImmutable|int $date) {
-    $start = self::startOf($interval, $date);
-    return $start->add(self::interval($interval));
+  public function endOf(DateTimeImmutable|int $date): DateTimeImmutable {
+    $start = $this->startOf($date);
+    return $start->add($this->interval());
   }
 
-  static function startOf(int $interval, DateTimeImmutable|int $date) {
+  public function startOf(DateTimeImmutable|int $date): DateTimeImmutable {
     $date = self::parseDate($date);
-    return match ($interval) {
+    return match ($this) {
       self::HOUR => $date->setTime($date->format('H'), 0),
       self::DAY => $date->modify('today'),
       self::WEEK => $date->modify('monday this week'),
@@ -81,9 +88,9 @@ class Interval {
     };
   }
 
-  static function startOfNext(int $interval, DateTimeImmutable|int $date) {
+  public function startOfNext(DateTimeImmutable|int $date): DateTimeImmutable {
     $date = self::parseDate($date);
-    return match ($interval) {
+    return match ($this) {
       self::HOUR => $date->modify('next hour')->setTime($date->format('H'), 0),
       self::DAY => $date->modify('tomorrow'),
       self::WEEK => $date->modify('monday next week'),
@@ -92,9 +99,9 @@ class Interval {
     };
   }
 
-  static function startOfLast(int $interval, DateTimeImmutable|int $date) {
+  public function startOfLast(DateTimeImmutable|int $date): DateTimeImmutable {
     $date = self::parseDate($date);
-    return match ($interval) {
+    return match ($this) {
       self::HOUR => $date->modify('last hour')->setTime($date->format('H'), 0),
       self::DAY => $date->modify('yesterday'),
       self::WEEK => $date->modify('monday last week'),

@@ -2,10 +2,30 @@
 
 use arnoson\KirbyStats\KirbyStats;
 
-class KirbyStatsSeed extends KirbyStats {
-  public static function seed() {
+function toggleVisit(bool $isVisit) {
+  if ($isVisit) {
+    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = null;
+  } else {
+    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = (new DateTimeImmutable())
+      ->setTime(0, 0, 1)
+      ->format('D, d M Y H:i:s \G\M\T');
+  }
+}
+
+return [
+  'description' => 'Create dummy data for testing',
+  'args' => [
+    'time' => [
+      'description' => 'The time range, e.g.: "1 week"',
+      'default' => '1 Month',
+    ],
+  ],
+  'command' => static function ($cli): void {
+    $cli->out('Creating seed (this might take a while)...');
+
+    $faker = Faker\Factory::create();
     $pages = kirby()->site()->index();
-    $from = (new DateTimeImmutable())->modify('-1 day');
+    $from = (new DateTimeImmutable())->modify('-' . $cli->arg('time'));
     $now = new DateTimeImmutable();
     $interval = new \DateInterval('PT1H'); // Hour interval
     $period = new \DatePeriod($from, $interval, $now);
@@ -27,13 +47,9 @@ class KirbyStatsSeed extends KirbyStats {
       // For each unique visitor
       for ($visitor = 0; $visitor < $uniqueVisitors; $visitor++) {
         // Track unique visitor (site-wide)
-        $browser = self::BROWSERS[array_rand(self::BROWSERS)];
-        $os = self::OS[array_rand(self::OS)];
-        static::stats()->increase(
-          site()->uuid()->toString(),
-          ['views', 'visits', $browser, $os],
-          $date
-        );
+        $_SERVER['HTTP_USER_AGENT'] = $faker->userAgent();
+        toggleVisit(true);
+        KirbyStats::processRequest('site://', $date);
 
         // Each visitor views 1-5 different pages
         $pagesToVisit = rand(1, 5);
@@ -52,35 +68,25 @@ class KirbyStatsSeed extends KirbyStats {
               ->index()
               ->nth(rand(0, $pages->count() - 1));
           }
-          $path = $page->uuid()->toString();
+          $uuid = $page->uuid()->toString();
 
           // First view of this page by this visitor
-          if (!in_array($path, $visitedPages)) {
-            static::stats()->increase(
-              $path,
-              ['views', 'visits', $browser, $os],
-              $date
-            );
-            $visitedPages[] = $path;
+          if (!in_array($uuid, $visitedPages)) {
+            toggleVisit(true);
+            KirbyStats::processRequest($uuid, $date);
+            $visitedPages[] = $uuid;
 
             // 50% chance to view the page more times
             $additionalViews = rand(0, 3);
             for ($v = 0; $v < $additionalViews; $v++) {
-              static::stats()->increase($path, ['views'], $date);
+              toggleVisit(false);
+              KirbyStats::processRequest($uuid, $date);
             }
           }
         }
       }
     }
-  }
-}
 
-return [
-  'description' => 'Create dummy data for testing',
-  'args' => [],
-  'command' => static function ($cli): void {
-    $cli->out('Creating seed (this might take a while)...');
-    KirbyStatsSeed::seed();
     $cli->success('Seed created!');
   },
 ];

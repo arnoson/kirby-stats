@@ -2,30 +2,28 @@
 
 namespace arnoson\KirbyStats;
 use DateTimeImmutable;
-use Kirby\Toolkit\Str;
 
 class StatsView {
   public static function createIntervalView(
-    int $interval,
+    Interval $interval,
     DateTimeImmutable $date,
     ?string $pageId = null
   ) {
     $now = new DateTimeImmutable();
-    $current = Interval::startOf($interval, $date);
-    $last = Interval::startOfLast($interval, $date);
-    $next = Interval::startOfNext($interval, $date);
+    $current = $interval->startOf($date);
+    $last = $interval->startOfLast($date);
+    $next = $interval->startOfNext($date);
 
     $hasLast = $date > KirbyStats::getFirstTime();
     $hasNext = $next < $now;
     $format = $interval === 'month' ? 'Y-m' : 'Y-m-d';
-    $path = $pageId ? ($pageId === 'home' ? '/' : "/$pageId") : null;
 
     $from = $current;
-    $to = Interval::endOf($interval, $date);
+    $to = $interval->endOf($date);
 
     // Url params
     $pageParam = $pageId ? "/page/$pageId" : '';
-    $intervalParam = Interval::name($interval);
+    $intervalParam = $interval->name();
     $currentParam = $current->format($format);
     $lastParam = $last->format($format);
     $nextParam = $next->format($format);
@@ -48,7 +46,7 @@ class StatsView {
       $interval === Interval::DAY &&
       $current == (new DateTimeImmutable())->setTime(0, 0);
     $labels = [
-      'date' => $isToday ? 'Today' : Interval::label($interval, $current),
+      'date' => $isToday ? 'Today' : $interval->label($current),
     ];
 
     // Stats
@@ -57,8 +55,8 @@ class StatsView {
       Interval::YEAR => Interval::MONTH,
       default => Interval::DAY,
     };
-    $path = page($pageId)->uuid()->toString();
-    $stats = KirbyStats::data($dataInterval, $from, $to, $path);
+    $uuid = $pageId ? page($pageId)->uuid()->toString() : null;
+    $stats = KirbyStats::data($from, $to, $dataInterval, $uuid);
 
     return [
       'component' => 'kirby-stats-main-view',
@@ -96,8 +94,8 @@ class StatsView {
       'withoutPage' => "stats/$range",
     ];
 
-    $path = $pageId ? page($pageId)->uuid()->toString() : null;
-    $stats = KirbyStats::data($interval, $from, $to, $path);
+    $uuid = $pageId ? page($pageId)->uuid()->toString() : null;
+    $stats = KirbyStats::data($from, $to, $interval, $uuid);
 
     if ($pageId) {
       $page = [
@@ -126,7 +124,7 @@ class StatsView {
     $now = new DateTimeImmutable();
 
     foreach (['day', 'week', 'month', 'year'] as $name) {
-      $slug = Interval::slug(Interval::fromName($name), $now);
+      $slug = Interval::fromName($name)->slug($now);
       $urls[$name] = "stats/$name/$slug" . ($page ? "/page/$page" : '');
     }
 

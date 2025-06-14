@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Label, LineChart } from 'chartist'
+import { Label, LineChart, times } from 'chartist'
 import 'chartist/dist/index.css'
 import { computed, onMounted, ref, watch } from 'vue'
 import { Page, Stats, Type } from '../types'
@@ -11,42 +11,70 @@ let chart: LineChart | undefined
 const chartistContainer = ref(null)
 
 const data = computed(() => {
-  const data: (number | null)[] = []
+  let data: (number | null)[] = []
   const labels: string[] = []
   let isFinished = true
 
-  for (const { label, paths, missing, now } of Object.values(props.stats)) {
-    labels.push(label)
-    if (missing) {
-      data.push(null)
-      continue
-    }
-    // If (the last) entry's time interval is not yet finished we'll set
-    // a flag to render a dashed line, indicating that the counters are not
-    // final yet.
-    if (now) isFinished = false
+  console.log(props.stats)
 
-    const { type, page } = props
-    let value: number | null = null
-
-    if (!page) {
-      // Handle site-wide statistics
-      if (type === 'visitors') {
-        value = paths['site://']?.counters.visits ?? 0
-      } else {
-        // Sum up all page visits/views
-        value = Object.entries(paths)
-          .filter(([path]) => !path.startsWith('site://'))
-          .reduce((sum, [, data]) => sum + data.counters[type], 0)
+  if (props.page) {
+    // Handle individual page statistics
+  } else {
+    // Handle site-wide statistics
+    if (props.type === 'visitors') {
+      const { traffic = {} } = props.stats['site://'] ?? {}
+      for (const [, entry] of Object.entries(traffic)) {
+        labels.push(entry.label)
+        if (entry.missing === true) {
+          data.push(null)
+          continue
+        }
+        data.push(entry.visits)
+        if (entry.unfinished) isFinished = false
       }
-    } else if (props.type !== 'visitors') {
-      // Handle individual page statistics (visitors is only supported for site)
-      const path = page.uuid ?? page.id
-      value = paths[path]?.counters[props.type] ?? 0
+    } else if (props.type === 'visits') {
+      const visitsByTime: Record<string, number> = {}
+      for (const [uuid, { traffic }] of Object.entries(props.stats)) {
+        for (const [time, data] of Object.entries(traffic)) {
+          visitsByTime[time] ??= 0
+          visitsByTime[time] += data.missing ? 0 : data.visits
+        }
+      }
     }
-
-    data.push(value)
   }
+
+  // for (const { label, paths, missing, now } of Object.values(props.stats)) {
+  //   labels.push(label)
+  //   if (missing) {
+  //     data.push(null)
+  //     continue
+  //   }
+  //   // If (the last) entry's time interval is not yet finished we'll set
+  //   // a flag to render a dashed line, indicating that the counters are not
+  //   // final yet.
+  //   if (now) isFinished = false
+
+  //   const { type, page } = props
+  //   let value: number | null = null
+
+  //   if (!page) {
+  //     // Handle site-wide statistics
+  //     if (type === 'visitors') {
+  //       value = paths['site://']?.counters.visits ?? 0
+  //     } else {
+  //       // Sum up all page visits/views
+  //       value = Object.entries(paths)
+  //         .filter(([path]) => !path.startsWith('site://'))
+  //         .reduce((sum, [, data]) => sum + data.counters[type], 0)
+  //     }
+  //   } else if (props.type !== 'visitors') {
+  //     // Handle individual page statistics (visitors is only supported for site)
+  //     const path = page.uuid ?? page.id
+  //     value = paths[path]?.counters[props.type] ?? 0
+  //   }
+
+  //   data.push(value)
+  // }
 
   if (isFinished) return { labels, series: [data] }
 

@@ -1,6 +1,9 @@
 # VSCode
 .vscode/.*
 
+# Pest
+.phpunit.cache
+
 # OS files
 .DS_Store
 

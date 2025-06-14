@@ -3,7 +3,8 @@
     "strict": true,
     "target": "Esnext",
     "module": "ESNext",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "noUncheckedIndexedAccess": true
   },
   "vueCompilerOptions": {
     "target": 2.7

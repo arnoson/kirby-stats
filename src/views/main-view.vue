@@ -76,7 +76,7 @@ const type = computed(() => {
     </div>
 
     <chart-section :stats="stats" :page="page" :type="type" />
-
+    <!-- 
     <section class="k-section">
       <k-grid style="gap: 1.5rem">
         <k-column width="1/2">
@@ -101,7 +101,7 @@ const type = computed(() => {
           />
         </k-column>
       </k-grid>
-    </section>
+    </section> -->
   </k-panel-inside>
 </template>
 

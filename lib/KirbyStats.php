@@ -2,70 +2,99 @@
 
 namespace arnoson\KirbyStats;
 
-use DateTime;
+use DatePeriod;
 use DateTimeImmutable;
 use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\Client\Browser;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
+use Kirby\Toolkit\Collection;
 use Kirby\Database\Database;
-use Kirby\Filesystem\F;
+use Kirby\Toolkit\A;
 
 class KirbyStats {
-  protected static ?Counters $stats = null;
+  protected static $mockOptions = [];
 
-  protected const BROWSERS = [
-    'Opera',
-    'MicrosoftEdge',
-    'InternetExplorer',
-    'Firefox',
-    'Safari',
-    'Chrome',
-  ];
+  public static function mockOptions(array $options) {
+    static::$mockOptions = $options;
+  }
 
-  protected const OS = ['Windows', 'Mac', 'Linux', 'Android', 'iOS'];
+  protected static function option(string $key, $default = null) {
+    return A::get(static::$mockOptions, $key, $default) ??
+      option("arnoson.kirby-stats.$key", $default);
+  }
 
-  protected static function stats() {
-    if (static::$stats) {
-      return static::$stats;
+  protected static ?Database $db = null;
+
+  protected static function db() {
+    if (static::$db) {
+      return static::$db;
     }
 
-    $counters = array_merge(['views', 'visits'], self::BROWSERS, self::OS);
-    $interval = Interval::fromName(
-      option('arnoson.kirby-stats.interval', 'hour')
-    );
-    $database = new Database([
+    static::$db = new Database([
       'type' => 'sqlite',
-      'database' => option('arnoson.kirby-stats.sqlite'),
+      'database' => static::option('sqlite'),
     ]);
 
-    static::$stats = new Counters($database, 'Stats', $counters, $interval);
-    return static::$stats;
+    static::$db->createTable('traffic', [
+      'time' => ['type' => 'int', 'key' => 'primary'],
+      'uuid' => ['type' => 'text', 'key' => 'primary'],
+      'interval' => ['type' => 'int', 'key' => 'primary'],
+      'views' => ['type' => 'int'],
+      'visits' => ['type' => 'int'],
+    ]);
+
+    static::$db->createTable('meta', [
+      'time' => ['type' => 'int', 'key' => 'primary'],
+      'uuid' => ['type' => 'text', 'key' => 'primary'],
+      'interval' => ['type' => 'int', 'key' => 'primary'],
+      'category' => ['type' => 'int', 'key' => 'primary'],
+      'key' => ['type' => 'text', 'key' => 'primary'],
+      'value' => ['type' => 'int'],
+    ]);
+
+    return static::$db;
   }
 
   public static function processRequest(
-    string $path,
-    ?DateTimeImmutable $date = null
+    string $uuid,
+    DateTimeImmutable $date = new DateTimeImmutable()
   ) {
-    if ($debug = option('arnoson.kirby-stats.debug')) {
-      $startTime = microtime(true);
-    }
-
-    if (kirby()->user() || !option('arnoson.kirby-stats.enabled')) {
+    if (kirby()->user() || !static::option('enabled')) {
       return;
     }
 
-    $info = static::getDeviceInfo();
-    if ($info['bot']) {
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+    $device = new DeviceDetector($userAgent);
+    $device->discardBotInformation();
+    $device->parse();
+
+    $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
+    if ($isBot) {
       return;
     }
 
+    $isVisit = static::handleVisitTracking();
+    static::increaseTraffic($uuid, isVisit: $isVisit, date: $date);
+
+    // Collecting meta data only makes sense for visits.
+    if ($isVisit) {
+      $os = $device->getOs('name');
+      $os = $os === 'GNU/Linux' ? 'Linux' : $os;
+
+      $browser = $device->getClient('name');
+      static::increaseMeta($uuid, 'browser', $browser, date: $date);
+      static::increaseMeta($uuid, 'os', $os, date: $date);
+    }
+  }
+
+  public static function handleVisitTracking(): bool {
     // Use the Last-Modified/If-Modified-Since headers as a way to detect unique
     // daily visits. The browser caches the response until midnight,
     // so subsequent requests on the same day will include the previous
     // timestamp in If-Modified-Since.
     // See https://withcabin.com/blog/how-cabin-measures-unique-visitors-without-cookies
     // Thanks Cabin for sharing this! :)
-    $ifModifiedSince = kirby()->request()->header('If-Modified-Since');
+    $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null;
     $clientTimestamp = $ifModifiedSince ? strtotime($ifModifiedSince) : null;
     $midnight = strtotime('today GMT');
     $isVisit = false;
@@ -86,74 +115,197 @@ class KirbyStats {
       'Last-Modified: ' . gmdate('D, d M Y H:i:s', $newTimestamp) . ' GMT'
     );
 
-    // Each request is a view (reloads get filtered out on the client).
-    $incrementCounters = ['views'];
+    return $isVisit;
+  }
 
-    // We are only interested in collection browser/os infos per visit.
+  public static function increaseTraffic(
+    string $uuid,
+    bool $isVisit,
+    DateTimeImmutable $date
+  ) {
+    $interval = Interval::fromName(static::option('interval.traffic', 'hour'));
+    $time = $interval->startOf($date)->getTimestamp();
+
     if ($isVisit) {
-      $incrementCounters[] = 'visits';
-
-      if (in_array($info['browser'], self::BROWSERS)) {
-        $incrementCounters[] = $info['browser'];
-      }
-
-      if (in_array($info['os'], self::OS)) {
-        $incrementCounters[] = $info['os'];
-      }
-    }
-
-    static::stats()->increase($path, $incrementCounters, $date);
-
-    if ($debug) {
-      $duration = microtime(true) - $startTime . 'μs';
-      $agent = $_SERVER['HTTP_USER_AGENT'];
-      $time = (new DateTime())->format('Y-m-d H:i:s');
-      $os = $info['os'];
-      $browser = $info['browser'];
-      F::append(
-        kirby()->root('base') . '/stats-log.txt',
-        "[$time] $duration $path $os $browser $agent\n"
-      );
+      $query = 'INSERT INTO traffic (time, uuid, interval, views, visits)
+        VALUES (?, ?, ?, 1, 1)
+        ON CONFLICT(time, uuid, interval)
+        DO UPDATE SET views = views + 1, visits = visits + 1';
+      static::db()->execute($query, [$time, $uuid, $interval->value]);
+    } else {
+      $query = 'INSERT INTO traffic (time, uuid, interval, views, visits)
+        VALUES (?, ?, ?, 1, 0)
+        ON CONFLICT(time, uuid, interval)
+        DO UPDATE SET views = views + 1';
+      static::db()->execute($query, [$time, $uuid, $interval->value]);
     }
   }
 
-  protected static function getDeviceInfo() {
-    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+  public static function increaseMeta(
+    string $uuid,
+    string $category,
+    string $key,
+    DateTimeImmutable $date
+  ) {
+    $interval = Interval::fromName(static::option('interval.meta', 'day'));
+    $time = $interval->startOf($date)->getTimestamp();
 
-    $device = new DeviceDetector($userAgent);
-    $device->discardBotInformation();
-    $device->parse();
+    $query = 'INSERT INTO meta (time, uuid, interval, category, key, value)
+      VALUES (?, ?, ?, ?, ?, 1)
+      ON CONFLICT(time, uuid, interval, category, key)
+      DO UPDATE SET value = value + 1;';
 
-    $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
-    $os = $device->getOs('name');
-    $os = $os === 'GNU/Linux' ? 'Linux' : $os;
-    $browser = Browser::getBrowserFamily($device->getClient('name'));
-
-    return [
-      'bot' => $isBot,
-      'browser' => static::toColumnName($browser),
-      'os' => static::toColumnName($os),
-    ];
-  }
-
-  protected static function toColumnName(string $text) {
-    return preg_replace('/[^a-zA-Z0-9_]/', '', $text);
+    static::db()->execute($query, [
+      $time,
+      $uuid,
+      $interval->value,
+      $category,
+      $key,
+    ]);
   }
 
   public static function data(
-    int $interval,
     DateTimeImmutable $from,
     DateTimeImmutable $to,
-    ?string $path = null
-  ): array {
-    return static::stats()->data($interval, $from, $to, $path);
+    ?Interval $dataInterval = Interval::HOUR,
+    ?string $uuid = null
+  ) {
+    $from = $dataInterval->startOf($from);
+    $to = $dataInterval->startOf($to);
+    $data = [];
+
+    $where = 'time BETWEEN ? AND ?';
+    $bindings = [$from->getTimestamp(), $to->getTimestamp()];
+    if ($uuid) {
+      $where .= ' AND uuid = ?';
+      $bindings[] = $uuid;
+    }
+
+    // Meta is simply summed over the request time.
+    $whereStatement = $where ? "WHERE $where" : '';
+    $query = "SELECT uuid, category, key, SUM(value) AS total
+      FROM meta
+      $whereStatement
+      GROUP BY category, key";
+
+    /** @var Collection */
+    $meta = static::db()->query($query, $bindings);
+
+    foreach ($meta as $row) {
+      $uuid = $row->uuid();
+      $category = $row->category();
+      $key = $row->key();
+
+      $data[$uuid] ??= ['meta' => []];
+      $data[$uuid]['meta'][$category] ??= [];
+      $data[$uuid]['meta'][$category][$key] ??= 0;
+      $data[$uuid]['meta'][$category][$key] += intval($row->total());
+    }
+
+    // Traffic data is grouped by time interval so we can display it as a chart.
+    /** @var Collection */
+    $traffic = static::db()
+      ->table('traffic')
+      ->select('*')
+      ->where($where, $bindings)
+      ->all();
+
+    foreach ($traffic as $row) {
+      $uuid = $row->uuid();
+      $time = intval($row->time());
+      $interval = Interval::from(intval($row->interval()));
+      $views = intval($row->views());
+      $visits = intval($row->visits());
+
+      $data[$uuid] ??= [];
+      $data[$uuid]['traffic'] ??= [];
+
+      // Since the intervals can be changed via config, it could happen that
+      // the values are stored in a different interval and we have to normalize
+      // them accordingly.
+      if ($interval === $dataInterval) {
+        // Intervals are matching.
+        $data[$uuid]['traffic'][$time] ??= ['views' => 0, 'visits' => 0, 'label' => $dataInterval->label($time)]; // prettier-ignore
+        $data[$uuid]['traffic'][$time]['views'] += $views;
+        $data[$uuid]['traffic'][$time]['visits'] += $visits;
+      } elseif ($interval->value < $dataInterval->value) {
+        // Stored interval is smaller so we add the value to the corresponding
+        // larger interval.
+        $time = $dataInterval->startOf($time)->getTimestamp();
+        $data[$uuid]['traffic'][$time] ??= ['views' => 0, 'visits' => 0, 'label' => $dataInterval->label($time)]; // prettier-ignore
+        $data[$uuid]['traffic'][$time]['views'] += $views;
+        $data[$uuid]['traffic'][$time]['visits'] += $visits;
+      } elseif ($interval->value > $dataInterval->value) {
+        // Stored interval is larger so we have to split the value up and create
+        // a number of synthetic smaller intervals.
+        $start = $interval->startOf($time);
+        $end = $interval->endOf($time);
+        $periodInterval = $dataInterval->interval();
+        $period = new DatePeriod($start, $periodInterval, $end);
+        $periodsCount = iterator_count($period);
+        $viewsPerPeriod = (int) round($views / $periodsCount);
+        $visitsPerPeriod = (int) round($visits / $periodsCount);
+        foreach ($period as $time) {
+          $time = $time->getTimestamp();
+          $data[$uuid]['traffic'][$time] ??= ['views' => 0, 'visits' => 0, 'label' => $dataInterval->label($time)]; // prettier-ignore
+          $data[$uuid]['traffic'][$time]['views'] += $viewsPerPeriod;
+          $data[$uuid]['traffic'][$time]['visits'] += $visitsPerPeriod;
+        }
+      }
+    }
+
+    // Add empty traffic values in between.
+    $now = new DateTimeImmutable();
+    foreach ($data as $uuid => &$entry) {
+      $timestamps = array_keys($entry['traffic']);
+      $entryStart = (new DateTimeImmutable())->setTimestamp(min($timestamps));
+      $entryEnd = (new DateTimeImmutable())->setTimestamp(max($timestamps));
+      $period = new DatePeriod($from, $dataInterval->interval(), $to);
+      $traffic = [];
+
+      foreach ($period as $time) {
+        $timestamp = $time->getTimestamp();
+
+        // Traffic data hasn't started yet or is already finished.
+        if ($time < $entryStart || $time > $entryEnd) {
+          $traffic[$timestamp] = [
+            'label' => $dataInterval->label($time),
+            'missing' => true,
+          ];
+          continue;
+        }
+
+        // Add empty values if missing.
+        $traffic[$timestamp] = $entry['traffic'][$timestamp] ?? [
+          'views' => 0,
+          'visits' => 0,
+          'label' => $dataInterval->label($time),
+        ];
+
+        // Data collection isn't finished yet.
+        if ($now >= $time && $now < $time->add($dataInterval->interval())) {
+          $traffic[$timestamp]['unfinished'] = true;
+        }
+      }
+      $entry['traffic'] = $traffic;
+    }
+
+    return $data;
   }
 
-  public static function getFirstTime() {
-    return static::stats()->getFirstTime();
+  public static function getFirstTime(): DateTimeImmutable {
+    $row = static::db()
+      ->table('traffic')
+      ->select('time')
+      ->order('time ASC')
+      ->first();
+    $timeStamp = $row ? intval($row->time()) : 0;
+    return (new DateTimeImmutable())->setTimestamp($timeStamp);
   }
 
-  public static function remove(): bool {
-    return static::stats()->remove();
+  public static function clear() {
+    static::db()->dropTable('meta');
+    static::db()->dropTable('traffic');
+    static::$db = null;
   }
 }
