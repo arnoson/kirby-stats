@@ -76,7 +76,7 @@ const type = computed(() => {
     </div>
 
     <chart-section :stats="stats" :page="page" :type="type" />
-    <!-- 
+
     <section class="k-section">
       <k-grid style="gap: 1.5rem">
         <k-column width="1/2">
@@ -88,20 +88,20 @@ const type = computed(() => {
               <k-headline>Devices</k-headline>
             </header>
             <browser-section :stats="stats" />
-            <os-section :stats="stats" />
+            <!-- <os-section :stats="stats" /> -->
           </section>
         </k-column>
         <k-column width="1/2">
-          <pages-section
+          <!-- <pages-section
             :stats="stats"
             :urls="urls"
             :type="type"
             :page="page"
             :labels="labels"
-          />
+          /> -->
         </k-column>
       </k-grid>
-    </section> -->
+    </section>
   </k-panel-inside>
 </template>
 

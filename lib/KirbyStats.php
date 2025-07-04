@@ -10,6 +10,7 @@ use Jaybizzle\CrawlerDetect\CrawlerDetect;
 use Kirby\Toolkit\Collection;
 use Kirby\Database\Database;
 use Kirby\Toolkit\A;
+use Kirby\Toolkit\Str;
 
 class KirbyStats {
   protected static $mockOptions = [];
@@ -174,6 +175,7 @@ class KirbyStats {
     $to = $dataInterval->startOf($to);
     $data = [];
 
+    // ? Should we only consider meta data of the site if no uuid is set?
     $where = 'time BETWEEN ? AND ?';
     $bindings = [$from->getTimestamp(), $to->getTimestamp()];
     if ($uuid) {
@@ -257,6 +259,11 @@ class KirbyStats {
     // Add empty traffic values in between.
     $now = new DateTimeImmutable();
     foreach ($data as $uuid => &$entry) {
+      // ? Is there a case where there is meta info but no traffic?
+      if (!isset($entry['traffic'])) {
+        continue;
+      }
+
       $timestamps = array_keys($entry['traffic']);
       $entryStart = (new DateTimeImmutable())->setTimestamp(min($timestamps));
       $entryEnd = (new DateTimeImmutable())->setTimestamp(max($timestamps));
@@ -288,6 +295,24 @@ class KirbyStats {
         }
       }
       $entry['traffic'] = $traffic;
+    }
+
+    // Sum total page traffic
+    $period = new DatePeriod($from, $dataInterval->interval(), $to);
+    foreach ($period as $time) {
+      $timestamp = $time->getTimestamp();
+      $totalViews = 0;
+      $totalVisits = 0;
+      foreach ($data as $uuid => &$entry) {
+        $traffic = $entry['traffic'][$timestamp];
+        $isMissing = $traffic['missing'] ?? false;
+        if (Str::startsWith($uuid, 'page://') && !$isMissing) {
+          $totalViews += $traffic['views'];
+          $totalVisits += $traffic['visits'];
+        }
+      }
+      $data['site://']['traffic'][$timestamp]['totalViews'] = $totalViews;
+      $data['site://']['traffic'][$timestamp]['totalVisits'] = $totalVisits;
     }
 
     return $data;

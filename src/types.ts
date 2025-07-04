@@ -27,6 +27,8 @@ export type StatsEntry = {
         missing: undefined
         visits: number
         views: number
+        totalViews?: number
+        totalVisits?: number
         label: string
         unfinished: boolean
       }
