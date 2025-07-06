@@ -6,24 +6,13 @@ const props = defineProps<{ stats: Stats }>()
 
 type Row = { name: string; visits: number; percent: number }
 const rows = computed(() => {
-  let totalVisits = 0
-  const data: Record<string, Row> = {}
-
-  for (const { paths, missing } of Object.values(props.stats)) {
-    if (missing) continue
-    for (const { counters } of Object.values(paths)) {
-      for (const name of os) {
-        data[name] ??= { name, visits: 0, percent: 0 }
-        data[name].visits += counters[name]
-        totalVisits += counters[name]
-      }
-    }
-  }
-
-  return Object.values(data)
-    .map((v) => ({
-      ...v,
-      percent: totalVisits ? (v.visits / totalVisits) * 100 : 0,
+  const data = props.stats.meta.os
+  const totalVisits = Object.values(data).reduce((sum, v) => sum + v, 0)
+  return Object.entries(data)
+    .map(([name, visits]) => ({
+      name,
+      visits,
+      percent: Math.round(totalVisits ? (visits / totalVisits) * 100 : 0),
     }))
     .sort((a, b) => b.percent - a.percent)
 })
@@ -47,3 +36,11 @@ const rows = computed(() => {
     />
   </section>
 </template>
+
+<style scoped>
+.k-section {
+  /* Overwrite Kirby's default section margin so the tables align nicely in
+  two column layout. */
+  margin-top: var(--table-row-height);
+}
+</style>

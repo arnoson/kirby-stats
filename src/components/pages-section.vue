@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Page, Stats } from '../types'
-import { capitalize, slugifyPath } from '../utils'
+import { computed, ref, watch } from 'vue'
+import { Page, Stats, Type } from '../types'
 
 const props = defineProps<{
   stats: Stats
   urls: Record<string, string>
   labels: Record<string, string>
-  type: string
+  type: Type
   page?: Page
 }>()
 
@@ -16,43 +15,29 @@ const searchQuery = ref('')
 
 // Pages only store visits and views. Visitors are defined as site visits,
 // which we can't display here.
-const pagesType = computed(() => {
+const type = computed(() => {
   if (props.type === 'visitors') return 'visits'
   return props.type
 })
 
-type Row = { name: string; count: number; percent: number; url: string }
-const rows = computed(() => {
-  let total = 0
-  const data: Record<string, Row> = {}
-
-  for (const { paths, missing } of Object.values(props.stats)) {
-    if (missing) continue
-    for (const [path, { counters, pageId, title }] of Object.entries(paths)) {
-      if (!path.startsWith('page://')) continue
-
-      const name = title || path
-      const slug = slugifyPath(pageId ?? path)
-      const url = props.urls.withPage?.replace('{{slug}}', slug)
-      data[path] ??= { name, count: 0, percent: 0, url }
-      const value = props.type === 'views' ? counters.views : counters.visits
-      data[path].count += value
-      total += value
-    }
-  }
-
-  return Object.values(data)
-    .map((v) => ({
-      ...v,
-      percent: total === 0 ? 0 : (v.count / total) * 100,
+type Row = { name: string; count: number; percent: number; id: string }
+const rows = computed<Row[]>(() => {
+  const key = type.value
+  const data = props.stats.totalPageTraffic
+  const totalCount = Object.values(data).reduce((sum, v) => sum + v[key], 0)
+  return data
+    .map((entry) => ({
+      ...entry,
+      count: entry[key],
+      percent: Math.round(totalCount ? (entry[key] / totalCount) * 100 : 0),
+      url: props.urls.withPage?.replace('{{slug}}', toSlug(entry.id)),
     }))
-    .filter((v) => !!v.count)
     .sort((a, b) => b.percent - a.percent)
 })
 
 const filteredRows = computed(() => {
   const query = searchQuery.value.toLocaleLowerCase()
-  return isSearching
+  return isSearching.value
     ? rows.value.filter((row) => row.name.toLocaleLowerCase().includes(query))
     : rows.value
 })
@@ -69,6 +54,13 @@ const paginatedRows = computed(() => {
 const paginate = ({ page }: { page: number }) => {
   pagination.value.page = page
 }
+
+const capitalize = (text: string) => text[0]?.toUpperCase() + text.slice(1)
+
+const toSlug = (str: string) =>
+  (str.startsWith('/') ? str.slice(1) : str).replace('/', '+')
+
+watch(filteredRows, () => paginate({ page: 1 }))
 </script>
 
 <template>
@@ -76,6 +68,7 @@ const paginate = ({ page }: { page: number }) => {
     <header class="k-section-header">
       <k-headline>Pages</k-headline>
       <k-button
+        :disabled="rows.length <= 1"
         icon="filter"
         variant="filled"
         size="xs"
@@ -98,7 +91,7 @@ const paginate = ({ page }: { page: number }) => {
       :index="false"
       :columns="{
         name: { label: 'Page', type: 'kirby-stats-percent', mobile: true },
-        count: { label: capitalize(pagesType), width: '8em', mobile: true },
+        count: { label: capitalize(type), width: '8em', mobile: true },
       }"
       :rows="paginatedRows"
       empty="No data"

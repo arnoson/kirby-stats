@@ -88,17 +88,17 @@ const type = computed(() => {
               <k-headline>Devices</k-headline>
             </header>
             <browser-section :stats="stats" />
-            <!-- <os-section :stats="stats" /> -->
+            <os-section :stats="stats" />
           </section>
         </k-column>
         <k-column width="1/2">
-          <!-- <pages-section
+          <pages-section
             :stats="stats"
             :urls="urls"
             :type="type"
             :page="page"
             :labels="labels"
-          /> -->
+          />
         </k-column>
       </k-grid>
     </section>

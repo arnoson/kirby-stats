@@ -50,6 +50,7 @@ return [
         $_SERVER['HTTP_USER_AGENT'] = $faker->userAgent();
         toggleVisit(true);
         KirbyStats::processRequest('site://', $date);
+        toggleVisit(false);
 
         // Each visitor views 1-5 different pages
         $pagesToVisit = rand(1, 5);
@@ -74,6 +75,8 @@ return [
           if (!in_array($uuid, $visitedPages)) {
             toggleVisit(true);
             KirbyStats::processRequest($uuid, $date);
+            toggleVisit(false);
+            KirbyStats::processRequest('site://', $date);
             $visitedPages[] = $uuid;
 
             // 50% chance to view the page more times
@@ -81,6 +84,7 @@ return [
             for ($v = 0; $v < $additionalViews; $v++) {
               toggleVisit(false);
               KirbyStats::processRequest($uuid, $date);
+              KirbyStats::processRequest('site://', $date);
             }
           }
         }

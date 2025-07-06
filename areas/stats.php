@@ -55,7 +55,7 @@ class StatsView {
       Interval::YEAR => Interval::MONTH,
       default => Interval::DAY,
     };
-    $uuid = $pageId ? page($pageId)->uuid()->toString() : null;
+    $uuid = $pageId ? page($pageId)->uuid()->toString() : 'site://';
     $stats = KirbyStats::data($from, $to, $dataInterval, $uuid);
 
     return [
@@ -94,7 +94,7 @@ class StatsView {
       'withoutPage' => "stats/$range",
     ];
 
-    $uuid = $pageId ? page($pageId)->uuid()->toString() : null;
+    $uuid = $pageId ? page($pageId)->uuid()->toString() : 'site://';
     $stats = KirbyStats::data($from, $to, $interval, $uuid);
 
     if ($pageId) {

@@ -3,6 +3,7 @@
 **/vendor
 **/media
 **/accounts
+**/example/content
 composer.lock
 .htaccess
 .prettierignore

@@ -11,17 +11,10 @@ let chart: LineChart | undefined
 const chartistContainer = ref(null)
 
 const data = computed(() => {
-  const uuid = props.page?.uuid ?? 'site://'
-  const traffic = Object.values(props.stats[uuid]?.traffic ?? {})
-  console.log(props.stats)
-  let key: 'views' | 'visits' | 'totalViews' | 'totalVisits'
-  // Visitors are site visits
-  if (props.type === 'visitors') key = 'visits'
-  else if (props.type === 'views' && uuid === 'site://') key = 'totalViews'
-  else if (props.type === 'visits' && uuid === 'site://') key = 'totalVisits'
+  const { traffic } = props.stats
 
-  const data = traffic.map((v) => (v.missing ? null : v[key]))
   const labels = traffic.map((v) => v.label)
+  const data = traffic.map((v) => (v.missing ? null : v[props.type]))
   const lastEntry = traffic.at(-1)
   const isFinished = !!lastEntry && !lastEntry.missing && !lastEntry.unfinished
   if (isFinished) return { labels, series: [data] }

@@ -19,27 +19,30 @@ export type StatsCounters = Record<'visits' | 'views' | Browser | OS, number>
 
 export type Interval = 'hour' | 'day' | 'week' | 'month' | 'year'
 
-export type StatsEntry = {
-  traffic: Record<
-    number,
-    | { missing: true; label: string }
-    | {
-        missing: undefined
-        visits: number
-        views: number
-        totalViews?: number
-        totalVisits?: number
-        label: string
-        unfinished: boolean
-      }
-  >
+export type Traffic = (
+  | { missing: true; label: string }
+  | {
+      label: string
+      views: number
+      visits: number
+      visitors: number
+      unfinished: boolean
+    }
+)[]
+
+export type Stats = {
+  traffic: Traffic
+  totalPageTraffic: {
+    name: string
+    id: string
+    views: number
+    visits: number
+  }[]
   meta: {
     browser: Record<string, number>
     os: Record<string, number>
   }
 }
-
-export type Stats = Record<string, StatsEntry>
 
 export type Page = {
   title: string
