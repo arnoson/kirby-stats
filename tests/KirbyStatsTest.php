@@ -131,10 +131,10 @@ it('handles data stored in a bigger interval than the current', function () {
   $timestamp = Interval::HOUR->startOf($time)->getTimestamp();
 
   // An hour with 1 visit ...
-  KirbyStats::mockOptions(['interval' => ['traffic' => 'hour']]);
+  KirbyStats::mockOptions(['interval' => 'hour']);
   request('page://test', $time, isVisit: true);
   // ... and a day with 24 visits.
-  KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
+  KirbyStats::mockOptions(['interval' => 'day']);
   for ($i = 0; $i < 24; $i++) {
     request('page://test', $time, isVisit: true);
   }
@@ -154,10 +154,10 @@ it('handles data stored in a smaller interval than the current', function () {
   $timestamp = Interval::WEEK->startOf($time)->getTimestamp();
 
   // A week with 1 visit...
-  KirbyStats::mockOptions(['interval' => ['traffic' => 'week']]);
+  KirbyStats::mockOptions(['interval' => 'week']);
   request('page://test', $time, isVisit: true);
   // ... and a day with 1 visit.
-  KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
+  KirbyStats::mockOptions(['interval' => 'day']);
   request('page://test', $time, isVisit: true);
   // When retrieving the data weekly, the day should be added to the week.
   $data = KirbyStats::data($from, $to, Interval::WEEK, 'page://test');
@@ -169,7 +169,7 @@ it('handles missing data', function () {
   $from = $today->modify('-3 day');
   $to = $today->modify('+2 day');
 
-  KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
+  KirbyStats::mockOptions(['interval' => 'day']);
   request('page://test', $today->modify('-2 day'), isVisit: true);
   request('page://test', $today, isVisit: true);
 

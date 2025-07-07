@@ -146,7 +146,7 @@ class KirbyStats {
     bool $isVisit = false,
     bool $isVisitor = false
   ) {
-    $interval = Interval::fromName(static::option('interval.traffic', 'hour'));
+    $interval = Interval::fromName(static::option('interval', 'hour'));
     $time = $interval->startOf($date)->getTimestamp();
 
     $views = $isView ? 1 : 0;
@@ -169,7 +169,14 @@ class KirbyStats {
     string $key,
     DateTimeImmutable $date
   ) {
-    $interval = Interval::fromName(static::option('interval.meta', 'day'));
+    // When storing traffic data hourly, for example, the most detailed view
+    // that we show in the panel is daily, since the chart displays data per
+    // hour during the day. Meta data (like browser or OS) is only shown as a
+    // daily aggregate, not per hour. Therefore, it's sufficient to store meta
+    // data at the next larger interval (e.g., daily if traffic is hourly),
+    // rather than matching the traffic data's resolution.
+    $trafficInterval = Interval::fromName(static::option('interval', 'day'));
+    $interval = $trafficInterval->nextLargerInterval();
     $time = $interval->startOf($date)->getTimestamp();
 
     $query = 'INSERT INTO meta (time, uuid, interval, category, key, value)

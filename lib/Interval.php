@@ -72,6 +72,16 @@ enum Interval: int {
     return self::parseDate($date)->format($format);
   }
 
+  public function nextLargerInterval() {
+    return match ($this) {
+      self::HOUR => self::DAY,
+      self::DAY => self::WEEK,
+      self::WEEK => self::MONTH,
+      self::MONTH => self::YEAR,
+      self::YEAR => self::YEAR,
+    };
+  }
+
   public function endOf(DateTimeImmutable|int $date): DateTimeImmutable {
     $start = $this->startOf($date);
     return $start->add($this->interval());

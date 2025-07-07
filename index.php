@@ -8,10 +8,7 @@ App::plugin('arnoson/kirby-stats', [
     'sqlite' => kirby()->root('storage')
       ? kirby()->root('storage') . '/stats.sqlite'
       : kirby()->root('site') . '/storage/stats.sqlite',
-    'interval' => [
-      'traffic' => 'hour',
-      'meta' => 'day',
-    ],
+    'interval' => 'day',
   ],
   'routes' => include __DIR__ . '/routes/routes.php',
   'areas' => include __DIR__ . '/areas/areas.php',
