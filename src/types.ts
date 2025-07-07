@@ -30,14 +30,21 @@ export type Traffic = Record<
   }
 >
 
-export type Stats = {
-  traffic: Traffic
-  totalTraffic: {
-    name: string
+export type TotalTraffic = Record<
+  string,
+  {
+    uuid: string
     id: string
+    name: string
     views: number
     visits: number
-  }[]
+    visitors: number
+  }
+>
+
+export type Stats = {
+  traffic: Traffic
+  totalTraffic: TotalTraffic
   meta: {
     browser: Record<string, number>
     os: Record<string, number>

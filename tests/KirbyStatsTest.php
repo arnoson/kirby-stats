@@ -117,8 +117,8 @@ it('provides data', function () {
     'os' => ['Windows' => 4],
   ]);
   expect($data['totalTraffic'])->toMatchArray([
-    ['id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2],
-    ['id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2],
+    'page://a' => ['id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2], // prettier-ignore
+    'page://b' => ['id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2], // prettier-ignore
   ]);
 });
 

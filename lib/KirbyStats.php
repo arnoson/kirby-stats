@@ -227,14 +227,14 @@ class KirbyStats {
     // Total traffic for page(s)
     if ($uuid === 'site://') {
       // For site-wide stats, sum all page traffic.
-      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits from traffic
-        WHERE time BETWEEN ? AND ? AND uuid LIKE 'page://%'
+      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
+        WHERE time BETWEEN ? AND ?
         GROUP BY uuid";
       /** @var Collection */
       $rows = static::db()->query($query, [$fromTime, $toTime]) ?: [];
     } else {
-      // For a specific page or uuid.
-      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits from traffic
+      // For a specific uuid.
+      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
         WHERE time BETWEEN ? AND ? AND uuid = ?
         GROUP BY uuid";
       /** @var Collection */
@@ -251,13 +251,17 @@ class KirbyStats {
           $parts[] = $page->title()->value();
         }
         $name = implode(' / ', array_reverse($parts));
+      } elseif ($uuid === 'site://') {
+        $name = site()->title()->value();
       }
 
-      $totalTraffic[] = [
+      $totalTraffic[$uuid] = [
+        'uuid' => $uuid,
         'id' => page($uuid)?->id() ?? $uuid,
         'name' => $name ?? $uuid,
         'views' => intval($row->total_views()),
         'visits' => intval($row->total_visits()),
+        'visitors' => intval($row->total_visitors()),
       ];
     }
 
