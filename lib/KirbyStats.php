@@ -240,7 +240,7 @@ class KirbyStats {
       /** @var Collection */
       $rows = static::db()->query($query, [$fromTime, $toTime, $uuid]) ?: [];
     }
-    $totalPageTraffic = [];
+    $totalTraffic = [];
     foreach ($rows as $row) {
       $uuid = $row->uuid();
       $page = page($uuid);
@@ -253,9 +253,9 @@ class KirbyStats {
         $name = implode(' / ', array_reverse($parts));
       }
 
-      $totalPageTraffic[] = [
-        'id' => page($uuid)?->id(),
-        'name' => $name,
+      $totalTraffic[] = [
+        'id' => page($uuid)?->id() ?? $uuid,
+        'name' => $name ?? $uuid,
         'views' => intval($row->total_views()),
         'visits' => intval($row->total_visits()),
       ];
@@ -263,8 +263,8 @@ class KirbyStats {
 
     return [
       'meta' => $meta,
-      'traffic' => array_values($traffic),
-      'totalPageTraffic' => $totalPageTraffic,
+      'traffic' => $traffic,
+      'totalTraffic' => $totalTraffic,
     ];
   }
 

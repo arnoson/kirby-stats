@@ -23,7 +23,7 @@ const type = computed(() => {
 type Row = { name: string; count: number; percent: number; id: string }
 const rows = computed<Row[]>(() => {
   const key = type.value
-  const data = props.stats.totalPageTraffic
+  const data = props.stats.totalTraffic
   const totalCount = Object.values(data).reduce((sum, v) => sum + v[key], 0)
   return data
     .map((entry) => ({

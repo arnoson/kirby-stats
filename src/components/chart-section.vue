@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Label, LineChart, times } from 'chartist'
+import { Label, LineChart } from 'chartist'
 import 'chartist/dist/index.css'
 import { computed, onMounted, ref, watch } from 'vue'
 import { Page, Stats, Type } from '../types'
@@ -11,12 +11,14 @@ let chart: LineChart | undefined
 const chartistContainer = ref(null)
 
 const data = computed(() => {
-  const { traffic } = props.stats
+  const traffic = Object.values(props.stats.traffic)
+  const key = props.type
 
   const labels = traffic.map((v) => v.label)
-  const data = traffic.map((v) => (v.missing ? null : v[props.type]))
+  const data = traffic.map((v) => v[key])
   const lastEntry = traffic.at(-1)
-  const isFinished = !!lastEntry && !lastEntry.missing && !lastEntry.unfinished
+  const isFinished =
+    lastEntry && lastEntry[key] !== null && !lastEntry.unfinished
   if (isFinished) return { labels, series: [data] }
 
   const trimmedData = trimData(data)

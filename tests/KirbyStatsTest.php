@@ -27,6 +27,18 @@ function toggleVisit(bool $isVisit) {
   }
 }
 
+function request(
+  string $uuid,
+  DateTimeImmutable $date,
+  $isVisit = false,
+  $isVisitor = false
+) {
+  toggleVisit($isVisitor);
+  KirbyStats::processRequest('site://', $date);
+  toggleVisit($isVisit);
+  KirbyStats::processRequest($uuid, $date);
+}
+
 it('provides data', function () {
   $now = new DateTimeImmutable();
 
@@ -36,41 +48,77 @@ it('provides data', function () {
   $time2 = $now->modify('10 AM');
   $timestamp2 = Interval::HOUR->startOf($time2)->getTimestamp();
 
-  $from = $time1->modify('yesterday');
+  $from = $time1->modify('today');
   $to = $time1->modify('tomorrow');
 
-  // 2 visits and 3 additional views at 8 AM
-  toggleVisit(true);
-  KirbyStats::processRequest('page://test', $time1);
-  KirbyStats::processRequest('page://test', $time1);
-  toggleVisit(false);
-  KirbyStats::processRequest('page://test', $time1);
-  KirbyStats::processRequest('page://test', $time1);
+  // 1 Visitor with 1 visit and two additional views to page A at 8 AM
+  request('page://a', $time1, isVisitor: true, isVisit: true);
+  request('page://a', $time1);
+  request('page://a', $time1);
 
-  // 1 visit and 1 additional view at 10 AM
-  toggleVisit(true);
-  KirbyStats::processRequest('page://test', $time2);
-  toggleVisit(false);
-  KirbyStats::processRequest('page://test', $time2);
+  // 1 Visitor with 1 visit and 1 additional view to page B at 8 AM
+  request('page://b', $time1, isVisitor: true, isVisit: true);
+  request('page://b', $time1);
 
-  $data = KirbyStats::data($from, $to);
-  $page = $data['page://test'];
+  // 1 Visitor with 1 visit to page A at 10 AM
+  request('page://a', $time2, isVisitor: true, isVisit: true);
 
-  expect($page['traffic'][$timestamp1])->toMatchArray([
-    'views' => 4,
-    'visits' => 2,
+  // 1 Visitor with 1 visit to page B at 10 AM
+  request('page://b', $time2, isVisitor: true, isVisit: true);
+
+  // Page A
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://a');
+  expect($data['traffic'][$timestamp1])->toMatchArray([
+    'views' => 3,
+    'visits' => 1,
     'label' => '08:00',
   ]);
-
-  expect($page['traffic'][$timestamp2])->toMatchArray([
-    'views' => 2,
+  expect($data['traffic'][$timestamp2])->toMatchArray([
+    'views' => 1,
     'visits' => 1,
     'label' => '10:00',
   ]);
+  expect($data['meta'])->toMatchArray([
+    'browser' => ['Firefox' => 2],
+    'os' => ['Windows' => 2],
+  ]);
 
-  expect($page['meta'])->toMatchArray([
-    'browser' => ['Firefox' => 3],
-    'os' => ['Windows' => 3],
+  // Page B
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://b');
+  expect($data['traffic'][$timestamp1])->toMatchArray([
+    'views' => 2,
+    'visits' => 1,
+    'label' => '08:00',
+  ]);
+  expect($data['traffic'][$timestamp2])->toMatchArray([
+    'views' => 1,
+    'visits' => 1,
+    'label' => '10:00',
+  ]);
+  expect($data['meta'])->toMatchArray([
+    'browser' => ['Firefox' => 2],
+    'os' => ['Windows' => 2],
+  ]);
+
+  // Site
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'site://');
+  expect($data['traffic'][$timestamp1])->toMatchArray([
+    'views' => 5,
+    'visits' => 2,
+    'label' => '08:00',
+  ]);
+  expect($data['traffic'][$timestamp2])->toMatchArray([
+    'views' => 2,
+    'visits' => 2,
+    'label' => '10:00',
+  ]);
+  expect($data['meta'])->toMatchArray([
+    'browser' => ['Firefox' => 4],
+    'os' => ['Windows' => 4],
+  ]);
+  expect($data['totalTraffic'])->toMatchArray([
+    ['id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2],
+    ['id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2],
   ]);
 });
 
@@ -84,17 +132,17 @@ it('handles data stored in a bigger interval than the current', function () {
 
   // An hour with 1 visit ...
   KirbyStats::mockOptions(['interval' => ['traffic' => 'hour']]);
-  KirbyStats::processRequest('page://test', $time);
+  request('page://test', $time, isVisit: true);
   // ... and a day with 24 visits.
   KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
   for ($i = 0; $i < 24; $i++) {
-    KirbyStats::processRequest('page://test', $time);
+    request('page://test', $time, isVisit: true);
   }
   // When retrieving the data hourly, the day should be split up in 24 hour
   // intervals with one visit each. So all in all the hour should now have 2
   // visits.
-  $data = KirbyStats::data($from, $to);
-  expect($data['page://test']['traffic'][$timestamp]['visits'])->toBe(2);
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://test');
+  expect($data['traffic'][$timestamp]['visits'])->toBe(2);
 });
 
 it('handles data stored in a smaller interval than the current', function () {
@@ -107,13 +155,13 @@ it('handles data stored in a smaller interval than the current', function () {
 
   // A week with 1 visit...
   KirbyStats::mockOptions(['interval' => ['traffic' => 'week']]);
-  KirbyStats::processRequest('page://test', $time);
+  request('page://test', $time, isVisit: true);
   // ... and a day with 1 visit.
   KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
-  KirbyStats::processRequest('page://test', $time);
+  request('page://test', $time, isVisit: true);
   // When retrieving the data weekly, the day should be added to the week.
-  $data = KirbyStats::data($from, $to, Interval::WEEK);
-  expect($data['page://test']['traffic'][$timestamp]['visits'])->toBe(2);
+  $data = KirbyStats::data($from, $to, Interval::WEEK, 'page://test');
+  expect($data['traffic'][$timestamp]['visits'])->toBe(2);
 });
 
 it('handles missing data', function () {
@@ -122,34 +170,32 @@ it('handles missing data', function () {
   $to = $today->modify('+2 day');
 
   KirbyStats::mockOptions(['interval' => ['traffic' => 'day']]);
-  KirbyStats::processRequest('page://test', $today->modify('-2 day'));
-  KirbyStats::processRequest('page://test', $today);
+  request('page://test', $today->modify('-2 day'), isVisit: true);
+  request('page://test', $today, isVisit: true);
 
-  $data = KirbyStats::data($from, $to, Interval::DAY);
-  $traffic = $data['page://test']['traffic'];
-
+  $data = KirbyStats::data($from, $to, Interval::DAY, 'page://test');
   // We expect one visit today and one visit two days ago. The day in between
   // should be empty.
   $timestamp = $today->modify('-2 days')->getTimestamp();
-  expect($traffic[$timestamp]['visits'])->toBe(1);
+  expect($data['traffic'][$timestamp]['visits'])->toBe(1);
 
   $timestamp = $today->modify('-1 days')->getTimestamp();
-  expect($traffic[$timestamp]['visits'])->toBe(0);
+  expect($data['traffic'][$timestamp]['visits'])->toBe(0);
 
   $timestamp = $today->getTimestamp();
-  expect($traffic[$timestamp]['visits'])->toBe(1);
+  expect($data['traffic'][$timestamp]['visits'])->toBe(1);
 
-  // // Data ends tomorrow and because the date is in the future we expect it also
-  // // to be missing.
-  // $timestamp = $today->modify('+1 day')->getTimestamp();
-  // expect($traffic[$timestamp]['missing'])->toBeTrue();
+  // Data ends tomorrow and because the date is in the future we expect it also
+  // to be missing.
+  $timestamp = $today->modify('+1 day')->getTimestamp();
+  expect($data['traffic'][$timestamp]['visits'])->toBeNull();
 });
 
 it('returns the time of the first data', function () {
   $now = new DateTimeImmutable();
   $oneWeekAgo = $now->modify('-1 week');
-  KirbyStats::processRequest('page://test', $oneWeekAgo);
-  KirbyStats::processRequest('page://test', $now);
+  request('page://test', $oneWeekAgo);
+  request('page://test', $now);
   expect(KirbyStats::getFirstTime())->toEqual(
     Interval::HOUR->startOf($oneWeekAgo)
   );
