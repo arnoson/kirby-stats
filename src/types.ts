@@ -19,6 +19,11 @@ export type StatsCounters = Record<'visits' | 'views' | Browser | OS, number>
 
 export type Interval = 'hour' | 'day' | 'week' | 'month' | 'year'
 
+export type Urls = Record<string, string> & {
+  range: Record<string, string>
+  interval: Record<string, string>
+}
+
 export type Traffic = Record<
   number,
   {

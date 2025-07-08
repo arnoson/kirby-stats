@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Page, Stats, Type } from '../types'
+import { usePanel } from 'kirbyuse'
+import { computed, ref } from 'vue'
 import browserSection from '../components/browser-section.vue'
-import pagesSection from '../components/pages-section.vue'
-import osSection from '../components/os-section.vue'
 import chartSection from '../components/chart-section.vue'
 import dateNavigation from '../components/date-navigation.vue'
+import osSection from '../components/os-section.vue'
+import pagesSection from '../components/pages-section.vue'
+import { Page, Stats, Type, Urls } from '../types'
 
 const props = defineProps<{
   stats: Stats
-  urls: Record<string, string>
+  urls: Urls
   labels: Record<string, string>
   page: Page
 }>()
 
+const { t } = usePanel()
 const selectedType = ref<Type>('visitors')
 const type = computed(() => {
   // Visitors can only be stored on the whole site, not per page.
@@ -21,6 +23,7 @@ const type = computed(() => {
   return selectedType.value
 })
 const isSite = computed(() => !props.page)
+const panel = usePanel()
 
 // We could use the user locale here, but some languages don't support compact
 // number representation. E.g. in german 1300 is still 1300 instead of 1.3k.
@@ -72,7 +75,7 @@ const total = computed(() => {
             :current="type === 'visitors'"
             @click="selectedType = 'visitors'"
           >
-            Visitors
+            {{ panel.t('arnoson.kirby-stats.visitors') }}
           </k-button>
         </div>
         <div class="k-tabs-tab">
@@ -82,7 +85,7 @@ const total = computed(() => {
             :current="type === 'visits'"
             @click="selectedType = 'visits'"
           >
-            Visits
+            {{ panel.t('arnoson.kirby-stats.visits') }}
           </k-button>
         </div>
         <div class="k-tabs-tab">
@@ -92,7 +95,7 @@ const total = computed(() => {
             :current="type === 'views'"
             @click="selectedType = 'views'"
           >
-            Views
+            {{ panel.t('arnoson.kirby-stats.views') }}
           </k-button>
         </div>
       </div>
@@ -102,19 +105,31 @@ const total = computed(() => {
           theme="info"
           :html="true"
           :data-show="type === 'visitors'"
-          :text="`<strong>${total.visitors}</strong> visitors in total`"
+          :text="
+            panel.t('arnoson.kirby-stats.total-visitors', {
+              visitors: total.visitors,
+            })
+          "
         />
         <k-box
           theme="info"
           :html="true"
           :data-show="type === 'visits'"
-          :text="`<strong>${total.visits}</strong> visits in total`"
+          :text="
+            panel.t('arnoson.kirby-stats.total-visits', {
+              visits: total.visits,
+            })
+          "
         />
         <k-box
           theme="info"
           :html="true"
           :data-show="type === 'views'"
-          :text="`<strong>${total.views}</strong> views in total`"
+          :text="
+            panel.t('arnoson.kirby-stats.total-views', {
+              views: total.views,
+            })
+          "
         />
       </div>
     </div>
@@ -129,7 +144,7 @@ const total = computed(() => {
               class="k-section-header"
               style="min-height: var(--height-xs)"
             >
-              <k-headline>Devices</k-headline>
+              <k-headline>{{ t('arnoson.kirby-stats.devices') }}</k-headline>
             </header>
             <browser-section :stats="stats" />
             <os-section :stats="stats" />

@@ -4,6 +4,7 @@ namespace arnoson\KirbyStats;
 
 use DateInterval;
 use DateTimeImmutable;
+use IntlDateFormatter;
 
 enum Interval: int {
   case HOUR = 0;
@@ -51,14 +52,30 @@ enum Interval: int {
   }
 
   public function label(DateTimeImmutable|int $date): string {
-    $format = match ($this) {
-      self::HOUR => 'H:i',
-      self::DAY => 'd M',
-      self::WEEK => 'd M',
-      self::MONTH => 'M Y',
-      self::YEAR => 'Y',
+    $locale = kirby()->user()->language();
+    $date = self::parseDate($date);
+
+    if ($this === self::WEEK) {
+      $start = $date;
+      $end = $date->modify('next sunday');
+
+      $pattern = 'dd MMM y';
+      $formatter = new IntlDateFormatter($locale, pattern: $pattern);
+
+      return $formatter->format($start) . ' — ' . $formatter->format($end);
+    }
+
+    $pattern = match ($this) {
+      self::HOUR => 'HH:mm',
+      self::DAY => 'd MMM',
+      self::WEEK => 'd MMM',
+      self::MONTH => 'MMM y',
+      default => 'y',
     };
-    return self::parseDate($date)->format($format);
+
+    $formatter = new IntlDateFormatter($locale, pattern: $pattern);
+
+    return $formatter->format($date);
   }
 
   public function slug(DateTimeImmutable|int $date): string {

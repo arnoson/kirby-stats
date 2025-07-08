@@ -20,9 +20,13 @@ class KirbyStats {
     static::$mockOptions = $options;
   }
 
-  protected static function option(string $key, $default = null) {
+  public static function option(string $key, $default = null) {
     return A::get(static::$mockOptions, $key, $default) ??
       option("arnoson.kirby-stats.$key", $default);
+  }
+
+  public static function interval() {
+    return Interval::fromName(static::option('interval'));
   }
 
   protected static ?Database $db = null;

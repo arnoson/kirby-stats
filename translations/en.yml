@@ -1,0 +1,25 @@
+views: Views
+visits: Visits
+visitors: Visitors
+devices: Devices
+browser: Browser
+os: Operating system
+no-data: No data for this period
+
+# total
+total-views: <strong>{views}</strong> views in total
+total-visits: <strong>{visits}</strong> visits in total
+total-visitors: <strong>{visitors}</strong> visitors in total
+
+# interval
+hour: Hour
+day: Day
+week: Week
+month: Month
+year: Year
+
+# range
+today: Today
+7-days: Last 7 days
+30-days: Last 30 days
+12-months: Last 12 months

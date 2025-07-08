@@ -1,0 +1,25 @@
+views: Aufrufe
+visits: Besuche
+visitors: Besucher:innen
+devices: Geräte
+browser: Browser
+os: Betriebssystem
+no-data: Keine Daten für diesen Zeitraum
+
+# total
+total-views: <strong>{views}</strong> Aufrufe insgesamt
+total-visits: <strong>{visits}</strong> Besuche insgesamt
+total-visitors: <strong>{visitors}</strong> Besucher:innen insgesamt
+
+# interval
+hour: Stunde
+day: Tag
+week: Woche
+month: Monat
+year: Jahr
+
+# range
+today: Heute
+7-days: Letzten 7 Tage
+30-days: Letzten 30 Tage
+12-months: Letzten 12 Monate

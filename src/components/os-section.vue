@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { os, Stats } from '../types'
+import { usePanel } from 'kirbyuse'
 
 const props = defineProps<{ stats: Stats }>()
+const { t } = usePanel()
 
 type Row = { name: string; visits: number; percent: number }
-const rows = computed(() => {
+const rows = computed<Row[]>(() => {
   const data = props.stats.meta.os
   const totalVisits = Object.values(data).reduce((sum, v) => sum + v, 0)
   return Object.entries(data)
@@ -25,14 +27,18 @@ const rows = computed(() => {
       :index="false"
       :columns="{
         name: {
-          label: 'Operating System',
+          label: t('arnoson.kirby-stats.os'),
           type: 'kirby-stats-percent',
           mobile: true,
         },
-        visits: { label: 'Visits', width: '8em', mobile: true },
+        visits: {
+          label: t('arnoson.kirby-stats.visits'),
+          width: '8em',
+          mobile: true,
+        },
       }"
       :rows="rows"
-      empty="No data"
+      :empty="t('arnoson.kirby-stats.no-data')"
     />
   </section>
 </template>

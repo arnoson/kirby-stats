@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Stats } from '../types'
+import { usePanel } from 'kirbyuse'
 
 const props = defineProps<{ stats: Stats }>()
+const { t } = usePanel()
 
 type Row = { name: string; visits: number; percent: number }
 const rows = computed<Row[]>(() => {
@@ -24,11 +26,19 @@ const rows = computed<Row[]>(() => {
       class="k-stats-browsers"
       :index="false"
       :columns="{
-        name: { label: 'Browser', type: 'kirby-stats-percent', mobile: true },
-        visits: { label: 'Visits', width: '8em', mobile: true },
+        name: {
+          label: t('arnoson.kirby-stats.browser'),
+          type: 'kirby-stats-percent',
+          mobile: true,
+        },
+        visits: {
+          label: t('arnoson.kirby-stats.visits'),
+          width: '8em',
+          mobile: true,
+        },
       }"
       :rows="rows"
-      empty="No data"
+      :empty="t('arnoson.kirby-stats.no-data')"
     />
   </section>
 </template>

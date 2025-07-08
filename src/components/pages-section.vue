@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Page, Stats, Type } from '../types'
+import { usePanel } from 'kirbyuse'
 
 const props = defineProps<{
   stats: Stats
@@ -10,6 +11,7 @@ const props = defineProps<{
   page?: Page
 }>()
 
+const { t } = usePanel()
 const isSearching = ref(false)
 const searchQuery = ref('')
 
@@ -67,15 +69,16 @@ watch(filteredRows, () => paginate({ page: 1 }))
 <template>
   <section class="k-section">
     <header class="k-section-header">
-      <k-headline>Pages</k-headline>
+      <k-headline>{{ t('pages') }}</k-headline>
       <k-button
         :disabled="rows.length <= 1"
         icon="filter"
         variant="filled"
         size="xs"
         @click="isSearching = !isSearching"
-        >Filter</k-button
       >
+        {{ t('filter') }}
+      </k-button>
     </header>
     <k-input
       v-if="isSearching"
@@ -91,12 +94,12 @@ watch(filteredRows, () => paginate({ page: 1 }))
       class="kirby-stats-pages"
       :index="false"
       :columns="{
-        name: { label: 'Page', type: 'kirby-stats-percent', mobile: true },
+        name: { label: t('page'), type: 'kirby-stats-percent', mobile: true },
         count: { label: capitalize(type), width: '8em', mobile: true },
       }"
       :rows="paginatedRows"
-      empty="No data"
       :pagination="{ ...pagination, details: true, total: filteredRows.length }"
+      :empty="t('arnoson.kirby-stats.no-data')"
       @paginate="paginate"
     />
   </section>

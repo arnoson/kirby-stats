@@ -2,6 +2,7 @@
 
 namespace arnoson\KirbyStats;
 use DateTimeImmutable;
+use Kirby\Toolkit\Str;
 
 class StatsView {
   public static function createIntervalView(
@@ -46,7 +47,9 @@ class StatsView {
       $interval === Interval::DAY &&
       $current == (new DateTimeImmutable())->setTime(0, 0);
     $labels = [
-      'date' => $isToday ? 'Today' : $interval->label($current),
+      'date' => $isToday
+        ? t('arnoson.kirby-stats.today')
+        : $interval->label($current),
     ];
 
     // Stats
@@ -74,11 +77,13 @@ class StatsView {
     ?string $pageId = null
   ) {
     $to = (new DateTimeImmutable())->modify('tomorrow');
-    [$modifier, $label, $interval] = match ($range) {
-      'today' => ['-1 day', 'Today', Interval::HOUR],
-      '7-days' => ['-7 days', 'Last 7 days', Interval::DAY],
-      '30-days' => ['-30 days', 'Last 30 days', Interval::DAY],
+    [$modifier, $name, $interval] = match ($range) {
+      'today' => ['-1 day', 'today', Interval::HOUR],
+      '7-days' => ['-7 days', '7-days', Interval::DAY],
+      '30-days' => ['-30 days', '30-days', Interval::DAY],
+      '12-months' => ['-12 months', '12-months', Interval::MONTH],
     };
+    $label = t("arnoson.kirby-stats.$name");
     $from = $to->modify($modifier);
 
     // For a single day view, users can navigate using prev/next buttons.
@@ -117,36 +122,63 @@ class StatsView {
   }
 
   /**
-   * The base urls need for every view.
+   * The base urls needed for every view.
    */
-  protected static function urls(?string $page = null) {
-    $urls = [];
+  protected static function urls(?string $pageId = null) {
     $now = new DateTimeImmutable();
+    $pageParam = $pageId ? static::encodePageParam($pageId) : '';
 
-    foreach (['day', 'week', 'month', 'year'] as $name) {
-      $slug = Interval::fromName($name)->slug($now);
-      $urls[$name] = "stats/$name/$slug" . ($page ? "/page/$page" : '');
+    $intervals = match (KirbyStats::interval()) {
+      Interval::HOUR => [
+        Interval::DAY,
+        Interval::WEEK,
+        Interval::MONTH,
+        Interval::YEAR,
+      ],
+      Interval::DAY => [Interval::WEEK, Interval::MONTH, Interval::YEAR],
+      Interval::WEEK => [Interval::MONTH, Interval::YEAR],
+      Interval::MONTH => [Interval::YEAR],
+    };
+
+    $intervalUrls = [];
+    foreach ($intervals as $interval) {
+      $name = $interval->name();
+      $param = $interval->slug($now);
+      $intervalUrls[$name] = "stats/$name/$param";
+      if ($pageParam) {
+        $intervalUrls[$name] .= "/page/$pageParam";
+      }
     }
 
-    foreach (['today', '7-days', '30-days'] as $name) {
-      $urls[$name] = "stats/$name" . ($page ? "/page/$page" : '');
+    $ranges = match (KirbyStats::option('interval')) {
+      'hour' => ['today', '7-days', '30-days', '12-months'],
+      'day' => ['7-days', '30-days', '12-months'],
+      'week' => ['30-days', '12-months'],
+      'month' => ['12-months'],
+    };
+    $rangeUrls = [];
+    foreach ($ranges as $name) {
+      $rangeUrls[$name] = "stats/$name";
+      if ($pageParam) {
+        $rangeUrls[$name] = "/page/$pageParam";
+      }
     }
 
-    return $urls;
+    return ['interval' => $intervalUrls, 'range' => $rangeUrls];
   }
 
   /**
    * Return the page id from the page url param.
    */
   public static function decodePageParam(string $path) {
-    return str_replace('+', '/', $path);
+    return Str::replace($path, '+', '/');
   }
 
   /**
    * Return the url param from a page's id.
    */
   public static function encodePageParam(string $path) {
-    return str_replace('+', '/', $path);
+    return Str::replace($path, '/', '+');
   }
 }
 
@@ -158,7 +190,14 @@ return fn() => [
   'views' => [
     [
       'pattern' => 'stats',
-      'action' => fn() => StatsView::createLatestView('today'),
+      'action' => fn() => StatsView::createLatestView(
+        match (KirbyStats::option('interval')) {
+          'hour' => 'today',
+          'day' => '7-days',
+          'week' => '30-days',
+          'month' => '12-months',
+        }
+      ),
     ],
     [
       'pattern' => 'stats/(:any)/page/(:any)',
