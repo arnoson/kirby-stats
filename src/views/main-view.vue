@@ -26,7 +26,7 @@ const type = computed(() => {
   <k-panel-inside class="kirby-stats-main-view">
     <k-header>
       Stats
-      <template #buttons class="fu">
+      <template #buttons>
         <k-tag
           v-if="page"
           style="align-self: center"
