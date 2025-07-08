@@ -37,15 +37,12 @@ defineProps<{
 .kirby-stats-percent-bar {
   height: 100%;
   border-radius: var(--rounded);
-  background-color: light-dark(var(--color-blue-300), var(--color-blue-700));
+  background-color: var(--kirby-stats-color-chart);
+  opacity: 0.3;
 }
 
 tr:hover .kirby-stats-percent-bar {
-  /* Color tints in increments of 50 are only available since Kirby 5 */
-  background-color: light-dark(
-    var(--color-blue-350, var(--color-blue-400)),
-    var(--color-blue-750, var(--color-blue-800))
-  );
+  opacity: 0.43;
 }
 
 .kirby-stats-percent-wrapper {

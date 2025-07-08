@@ -91,12 +91,6 @@ watch(data, (value) => chart?.update(value))
 
 <style>
 .kirby-stats-chart {
-  /* Color tints in increments of 50 are only available since Kirby 5 */
-  --kirby-stats-color-chart: light-dark(
-    var(--color-blue),
-    var(--color-blue-650, var(--color-blue-700))
-  );
-
   overflow: hidden;
   padding: 0rem 3rem 0.3rem 0.7rem;
 

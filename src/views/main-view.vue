@@ -68,7 +68,7 @@ const total = computed(() => {
         <div class="k-tabs-tab" v-if="!page">
           <k-button
             variant="dimmed"
-            class="k-tab-button"
+            class="k-tabs-button"
             :current="type === 'visitors'"
             @click="selectedType = 'visitors'"
           >
@@ -78,7 +78,7 @@ const total = computed(() => {
         <div class="k-tabs-tab">
           <k-button
             variant="dimmed"
-            class="k-tab-button"
+            class="k-tabs-button"
             :current="type === 'visits'"
             @click="selectedType = 'visits'"
           >
@@ -88,7 +88,7 @@ const total = computed(() => {
         <div class="k-tabs-tab">
           <k-button
             variant="dimmed"
-            class="k-tab-button"
+            class="k-tabs-button"
             :current="type === 'views'"
             @click="selectedType = 'views'"
           >
@@ -151,6 +151,12 @@ const total = computed(() => {
 
 <style scoped>
 .kirby-stats-main-view {
+  /* Color tints in increments of 50 are only available since Kirby 5 */
+  --kirby-stats-color-chart: light-dark(
+    var(--color-blue),
+    var(--color-blue-650, var(--color-blue-700))
+  );
+
   .k-button[data-disabled] {
     opacity: 0.5;
     pointer-events: none;
