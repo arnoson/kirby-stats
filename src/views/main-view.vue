@@ -20,6 +20,27 @@ const type = computed(() => {
   if (props.page && selectedType.value === 'visitors') return 'visits'
   return selectedType.value
 })
+const isSite = computed(() => !props.page)
+
+// We could use the user locale here, but some languages don't support compact
+// number representation. E.g. in german 1300 is still 1300 instead of 1.3k.
+// Other analytic tools use the english compact notation even in the german
+// translation so we'll do the same.
+const compactNumber = (n: number) =>
+  new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(n)
+
+const total = computed(() => {
+  const uuid = props.page?.uuid ?? 'site://'
+  const traffic = props.stats.totalTraffic[uuid]
+  return {
+    views: compactNumber(traffic?.views ?? 0),
+    visits: compactNumber(traffic?.visits ?? 0),
+    visitors: compactNumber(traffic?.visitors ?? 0),
+  }
+})
 </script>
 
 <template>
@@ -42,36 +63,59 @@ const type = computed(() => {
       </template>
     </k-header>
 
-    <div class="k-tabs" style="margin-bottom: var(--spacing-6)">
-      <div class="k-tabs-tab" v-if="!page">
-        <k-button
-          variant="dimmed"
-          class="k-tab-button"
-          :current="type === 'visitors'"
-          @click="selectedType = 'visitors'"
-        >
-          Visitors
-        </k-button>
+    <div class="kirby-stats-tabs">
+      <div class="k-tabs" style="margin-bottom: var(--spacing-6)">
+        <div class="k-tabs-tab" v-if="!page">
+          <k-button
+            variant="dimmed"
+            class="k-tab-button"
+            :current="type === 'visitors'"
+            @click="selectedType = 'visitors'"
+          >
+            Visitors
+          </k-button>
+        </div>
+        <div class="k-tabs-tab">
+          <k-button
+            variant="dimmed"
+            class="k-tab-button"
+            :current="type === 'visits'"
+            @click="selectedType = 'visits'"
+          >
+            Visits
+          </k-button>
+        </div>
+        <div class="k-tabs-tab">
+          <k-button
+            variant="dimmed"
+            class="k-tab-button"
+            :current="type === 'views'"
+            @click="selectedType = 'views'"
+          >
+            Views
+          </k-button>
+        </div>
       </div>
-      <div class="k-tabs-tab">
-        <k-button
-          variant="dimmed"
-          class="k-tab-button"
-          :current="type === 'visits'"
-          @click="selectedType = 'visits'"
-        >
-          Visits
-        </k-button>
-      </div>
-      <div class="k-tabs-tab">
-        <k-button
-          variant="dimmed"
-          class="k-tab-button"
-          :current="type === 'views'"
-          @click="selectedType = 'views'"
-        >
-          Views
-        </k-button>
+      <div class="kirby-stats-total">
+        <k-box
+          v-if="isSite"
+          theme="info"
+          :html="true"
+          :data-show="type === 'visitors'"
+          :text="`<strong>${total.visitors}</strong> visitors in total`"
+        />
+        <k-box
+          theme="info"
+          :html="true"
+          :data-show="type === 'visits'"
+          :text="`<strong>${total.visits}</strong> visits in total`"
+        />
+        <k-box
+          theme="info"
+          :html="true"
+          :data-show="type === 'views'"
+          :text="`<strong>${total.views}</strong> views in total`"
+        />
       </div>
     </div>
 
@@ -121,6 +165,29 @@ const type = computed(() => {
     tr th:nth-child(2) {
       text-align: center;
     }
+  }
+}
+
+.kirby-stats-tabs {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* To prevent the boxes from jumping when changing the type, we stack them
+all on top of each other and only hide them. This way each box takes up the
+width of the largest box. */
+.kirby-stats-total {
+  display: grid;
+
+  > * {
+    grid-area: 1/1;
+    justify-content: center;
+  }
+
+  > *:not([data-show]) {
+    visibility: hidden;
   }
 }
 </style>
