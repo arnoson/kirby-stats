@@ -8,5 +8,7 @@ composer.lock
 .htaccess
 .prettierignore
 .gitignore
+*.svg
+LICENSE
 /index.js
 /index.css

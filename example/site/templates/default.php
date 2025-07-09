@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <?= js('assets/stats.js', ['async', 'defer']) ?>
+  <?= js('assets/stats.js', ['defer']) ?>
 </head>
 <body>
   <h1><?= $page->title() ?></h1>
