@@ -5,5 +5,6 @@ return [
   'arnoson.kirby-stats' => [
     'enabled' => true,
     'database' => __DIR__ . '/../../stats-test.sqlite',
+    'interval' => 'hour'
   ],
 ];
