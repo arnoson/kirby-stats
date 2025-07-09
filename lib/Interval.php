@@ -52,7 +52,7 @@ enum Interval: int {
   }
 
   public function label(DateTimeImmutable|int $date): string {
-    $locale = kirby()->user()->language();
+    $locale = kirby()->user()?->language();
     $date = self::parseDate($date);
 
     if ($this === self::WEEK) {
