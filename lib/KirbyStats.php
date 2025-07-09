@@ -10,6 +10,8 @@ use DeviceDetector\Parser\OperatingSystem;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
 use Kirby\Toolkit\Collection;
 use Kirby\Database\Database;
+use Kirby\Filesystem\Dir;
+use Kirby\Filesystem\F;
 use Kirby\Toolkit\A;
 use Kirby\Toolkit\Str;
 
@@ -36,9 +38,18 @@ class KirbyStats {
       return static::$db;
     }
 
+    $database = static::option('database');
+
+    if (!F::exists($database)) {
+      $dir = F::dirname($database);
+      if (!is_dir($dir)) {
+        Dir::make($dir);
+      }
+    }
+
     static::$db = new Database([
       'type' => 'sqlite',
-      'database' => static::option('sqlite'),
+      'database' => $database,
     ]);
 
     static::$db->createTable('traffic', [

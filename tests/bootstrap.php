@@ -12,4 +12,4 @@ $app = new Kirby\Cms\App([
   ],
 ]);
 
-F::remove(option('arnoson.kirby-stats.sqlite'));
+F::remove(option('arnoson.kirby-stats.database'));
