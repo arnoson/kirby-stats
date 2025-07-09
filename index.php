@@ -9,9 +9,7 @@ use Kirby\Toolkit\A;
 App::plugin('arnoson/kirby-stats', [
   'options' => [
     'enabled' => true,
-    'sqlite' => kirby()->root('storage')
-      ? kirby()->root('storage') . '/stats.sqlite'
-      : kirby()->root('site') . '/storage/stats.sqlite',
+    'database' => kirby()->root('logs') . '/kirby-stats/stats.sqlite',
     'interval' => 'day',
   ],
   'routes' => include __DIR__ . '/routes/routes.php',
