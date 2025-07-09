@@ -17,7 +17,7 @@ composer require arnoson/kirby-stats
 
 ## Usage
 
-Copy the [stats.js]https://github.com/arnoson/kirby-stats/tree/main/stats.js file from the plugin folder into Kirby's asset folder. Then include the file in your templates:
+Copy the [stats.js](https://github.com/arnoson/kirby-stats/tree/main/stats.js) file from the plugin folder into Kirby's asset folder. Then include the file in your templates:
 
 ```php
 <?= js('assets/stats.js', ['defer']) ?>
