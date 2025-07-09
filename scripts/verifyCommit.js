@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 const messagePath = resolve('.git/COMMIT_EDITMSG')
 const message = readFileSync(messagePath, 'utf-8').trim()
 const commitPattern =
-  /^(revert: )?(feat|fix|docs|dx|style|refactor|perf|test|workflow|build|ci|chore|types|wip|release)(\(.+\))?: .{1,50}/
+  /^(revert: )?(feat|fix|docs|dx|style|refactor|perf|test|workflow|build|ci|chore|types|wip|release)(\(.+\))?!?: .{1,50}/
 
 if (!commitPattern.test(message)) {
   console.error(
