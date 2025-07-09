@@ -23,7 +23,7 @@ class KirbyStats {
   }
 
   public static function option(string $key, $default = null) {
-    return A::get(static::$mockOptions, $key, $default) ??
+    return A::get(static::$mockOptions, $key) ??
       option("arnoson.kirby-stats.$key", $default);
   }
 
