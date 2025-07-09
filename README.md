@@ -50,7 +50,7 @@ Also see the [example folder](https://github.com/arnoson/kirby-stats/tree/main/e
 
 ## Advanced Usage
 
-If you want more control, you can also call the tracking endpoints manually instead of including the provided script, for example if you are using an SPA-setup. It is import that you always call both `page` and `site` endpoints for each page visit. Have a look at the [provided script](https://github.com/arnoson/kirby-stats/tree/main/src/stats.ts) for more details.
+If you want more control, you can also call the tracking endpoints manually instead of including the provided script. Always call both `page` and `site` endpoints for each page visit. Have a look at the [provided script](https://github.com/arnoson/kirby-stats/tree/main/src/stats.ts) for more details.
 
 ```js
 const path = location.pathname.replace(/^\//, '') // remove leading slash
@@ -60,7 +60,7 @@ fetch(`/kirby-stats/site`, { keepalive: true }) // increase total page counters 
 
 ## Privacy
 
-I'm no lawyer and can't give you any legal advice regarding GDPR. But I can tell you what data the plugin is collecting. For each page view various counters are increased for a specified time interval. For example, after the first user has visited your about page the data would be:
+I'm not a legal expert and cannot provide any legal advice regarding GDPR. However, I can explain what data the plugin collects: For each page view, various counters are incremented within a specified time interval. For instance, after the first user visits your about page, the data might look like this:
 
 ### Traffic
 
@@ -78,7 +78,7 @@ Visitors are tracked on a site-wide level using a technique based on request cac
 | site://      | <this week> | week     | Browser  | Firefox | 1     |
 | page://about | <this week> | week     | OS       | Windows | 1     |
 
-Metadata such as browser and OS are also grouped per time interval but stored less granularly. That's it. No IP addresses are stored, no cookies are set by this plugin, and no unique requests are tracked. All data is grouped into time intervals.
+Metadata such as browser and OS are also grouped per time interval but stored less granularly. That's it. No IP addresses are stored, no cookies are set by this plugin, and no unique requests are stored. All data is grouped into time intervals.
 
 ## Support
 
