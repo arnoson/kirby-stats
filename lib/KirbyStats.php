@@ -142,10 +142,15 @@ class KirbyStats {
       $isVisit = true;
     }
 
+    $response = kirby()->response();
     $secondsUntilMidnight = strtotime('tomorrow') - time();
-    header("Cache-Control: public, max-age=$secondsUntilMidnight, no-cache");
-    header(
-      'Last-Modified: ' . gmdate('D, d M Y H:i:s', $newTimestamp) . ' GMT'
+    $response->header(
+      'Cache-Control',
+      "public, max-age=$secondsUntilMidnight, no-cache"
+    );
+    $response->header(
+      'Last-Modified',
+      gmdate('D, d M Y H:i:s', $newTimestamp) . ' GMT'
     );
 
     return $isVisit;
