@@ -125,14 +125,12 @@ class KirbyStats {
 
   public static function handleVisitTracking(): bool {
     // Use the Last-Modified/If-Modified-Since headers as a way to detect unique
-    // daily visits. The browser caches the response until midnight,
-    // so subsequent requests on the same day will include the previous
-    // timestamp in If-Modified-Since.
+    // daily visits.
     // See https://withcabin.com/blog/how-cabin-measures-unique-visitors-without-cookies
     // Thanks Cabin for sharing this! :)
     $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null;
     $clientTimestamp = $ifModifiedSince ? strtotime($ifModifiedSince) : null;
-    $midnight = strtotime('today GMT');
+    $midnight = strtotime('today');
     $isVisit = false;
 
     if ($clientTimestamp && $clientTimestamp >= $midnight) {
@@ -144,9 +142,8 @@ class KirbyStats {
       $isVisit = true;
     }
 
-    $tomorrow = strtotime('tomorrow GMT');
-    header('Cache-Control: no-cache');
-    header('Expires: ' . gmdate('D, d M Y H:i:s', $tomorrow) . ' GMT');
+    $secondsUntilMidnight = strtotime('tomorrow') - time();
+    header("Cache-Control: public, max-age=$secondsUntilMidnight, no-cache");
     header(
       'Last-Modified: ' . gmdate('D, d M Y H:i:s', $newTimestamp) . ' GMT'
     );
