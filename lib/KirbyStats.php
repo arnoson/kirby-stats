@@ -130,7 +130,7 @@ class KirbyStats {
     // Thanks Cabin for sharing this! :)
     $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null;
     $clientTimestamp = $ifModifiedSince ? strtotime($ifModifiedSince) : null;
-    $midnight = strtotime('today');
+    $midnight = strtotime('today midnight UTC');
     $isVisit = false;
 
     if ($clientTimestamp && $clientTimestamp >= $midnight) {
