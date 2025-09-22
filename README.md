@@ -44,6 +44,10 @@ Also see the [example folder](https://github.com/arnoson/kirby-stats/tree/main/e
 
     // Where to create the database.
     'database' => kirby()->root('logs') . '/kirby-stats/stats.sqlite', // default
+
+    // When to treat a request as a new visit. In this case, if the same user
+    // visits again after more than six hours, we store it as a new visit.
+    'sessionDuration' = 60 * 60 * 6 // in seconds, default is 6 hours
   ],
 ];
 ```
@@ -69,8 +73,6 @@ I'm not a legal expert and cannot provide any legal advice regarding GDPR. Howev
 | site://      | <this day> | day      | 1     | 1      | 1        |
 | page://about | <this day> | day      | 1     | 1      | 0        |
 
-Visitors are tracked on a site-wide level using a technique based on request caching headers. This method, pioneered by [Cabin](https://withcabin.com/), allows for the accurate measurement of unique visitors without the need for cookies. You can learn more about this approach in their [blog post](https://withcabin.com/blog/how-cabin-measures-unique-visitors-without-cookies).
-
 ### Meta
 
 | uuid         | time        | interval | category | key     | value |
@@ -78,7 +80,15 @@ Visitors are tracked on a site-wide level using a technique based on request cac
 | site://      | <this week> | week     | Browser  | Firefox | 1     |
 | page://about | <this week> | week     | OS       | Windows | 1     |
 
-Metadata such as browser and OS are also grouped per time interval but stored less granularly. That's it. No IP addresses are stored, no cookies are set by this plugin, and no unique requests are stored. All data is grouped into time intervals.
+Metadata such as browser and OS are also grouped per time interval but stored less granularly.
+
+### Unique Visitor Tracking
+
+Visitors are tracked on a site-wide level using a technique based on request caching headers. This method, pioneered by [Cabin](https://withcabin.com/), allows for the accurate measurement of unique visitors without the need for cookies. You can learn more about this approach in their [blog post](https://withcabin.com/blog/how-cabin-measures-unique-visitors-without-cookies).
+
+That's it. No IP addresses are stored, no cookies are set by this plugin, and no unique requests are stored. All data is grouped into time intervals.
+
+The session duration (the amount of time after which a user is treated as a new visitor again) is calculated based solely on the cache headers (by comparing the value of the `If-Modified-Since` header with the current time).
 
 ## Support
 
