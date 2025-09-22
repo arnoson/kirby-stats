@@ -23,7 +23,7 @@
   "author": "Arno Schlipf",
   "license": "MIT",
   "devDependencies": {
-    "@prettier/plugin-php": "^0.22.4",
+    "@prettier/plugin-php": "^0.24.0",
     "bumpp": "^10.1.1",
     "kirbyup": "^3.3.0",
     "kirbyuse": "^0.12.1",
