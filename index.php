@@ -11,6 +11,7 @@ App::plugin('arnoson/kirby-stats', [
     'enabled' => true,
     'database' => kirby()->root('logs') . '/kirby-stats/stats.sqlite',
     'interval' => 'day',
+    'sessionDuration' => 60 * 60 * 6, // 6 hours
   ],
   'routes' => include __DIR__ . '/routes/routes.php',
   'areas' => include __DIR__ . '/areas/areas.php',

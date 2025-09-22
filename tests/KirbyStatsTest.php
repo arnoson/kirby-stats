@@ -2,10 +2,10 @@
 
 use arnoson\KirbyStats\Interval;
 use arnoson\KirbyStats\KirbyStats;
-use Kirby\Cms\App;
 
 beforeEach(function () {
   KirbyStats::mockOptions([]);
+  KirbyStats::resetMockTime();
   $_SERVER = [
     'HTTP_USER_AGENT' =>
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0',
@@ -15,14 +15,16 @@ beforeEach(function () {
 
 afterEach(function () {
   KirbyStats::clear();
+  KirbyStats::resetMockTime();
 });
 
-function toggleVisit(bool $isVisit) {
+function toggleVisit(bool $isVisit, $date = new DateTimeImmutable()) {
   if ($isVisit) {
     $_SERVER['HTTP_IF_MODIFIED_SINCE'] = null;
   } else {
-    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = (new DateTimeImmutable())
-      ->setTime(0, 0, 1)
+    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = $date
+      ->setTimezone(new DateTimeZone('UTC'))
+      ->modify('-1 hour')
       ->format('D, d M Y H:i:s \G\M\T');
   }
 }
@@ -33,9 +35,10 @@ function request(
   $isVisit = false,
   $isVisitor = false
 ) {
-  toggleVisit($isVisitor);
+  KirbyStats::mockTime($date);
+  toggleVisit($isVisitor, $date);
   KirbyStats::processRequest('site://', $date);
-  toggleVisit($isVisit);
+  toggleVisit($isVisit, $date);
   KirbyStats::processRequest($uuid, $date);
 }
 
@@ -119,6 +122,39 @@ it('provides data', function () {
   expect($data['totalTraffic'])->toMatchArray([
     'page://a' => ['uuid' => 'page://a', 'id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2, 'visitors' => 0], // prettier-ignore
     'page://b' => ['uuid' => 'page://b', 'id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2, 'visitors' => 0], // prettier-ignore
+  ]);
+});
+
+it('handles session length correctly', function () {
+  $sessionStart = (new DateTimeImmutable())->modify('8 AM');
+  KirbyStats::mockOptions(['sessionDuration' => 60 * 3]); // 3 min session
+
+  $_SERVER['HTTP_IF_MODIFIED_SINCE'] = $sessionStart
+    ->setTimezone(new DateTimeZone('UTC'))
+    ->format('D, d M Y H:i:s \G\M\T');
+
+  // First request.
+  $time = $sessionStart;
+  KirbyStats::mockTime($time);
+  KirbyStats::processRequest('page://a', $time);
+
+  // Still inside session.
+  $time = $sessionStart->modify('+ 1 minute');
+  KirbyStats::mockTime($time);
+  KirbyStats::processRequest('page://a', $time);
+
+  // Session is up, so this should count as a new visit.
+  $time = $sessionStart->modify('+ 5 minutes');
+  KirbyStats::mockTime($time);
+  KirbyStats::processRequest('page://a', $time);
+
+  $from = $sessionStart->modify('today');
+  $to = $sessionStart->modify('tomorrow');
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://a');
+  $timestamp = Interval::HOUR->startOf($sessionStart)->getTimestamp();
+  expect($data['traffic'][$timestamp])->toMatchArray([
+    'views' => 3,
+    'visits' => 2,
   ]);
 });
 

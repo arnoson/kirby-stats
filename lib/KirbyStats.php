@@ -4,6 +4,7 @@ namespace arnoson\KirbyStats;
 
 use DatePeriod;
 use DateTimeImmutable;
+use DateTimeZone;
 use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\Client\Browser;
 use DeviceDetector\Parser\OperatingSystem;
@@ -17,9 +18,24 @@ use Kirby\Toolkit\Str;
 
 class KirbyStats {
   protected static $mockOptions = [];
+  protected static $mockTime = null;
 
   public static function mockOptions(array $options) {
     static::$mockOptions = $options;
+  }
+
+  public static function mockTime(DateTimeImmutable $date) {
+    static::$mockTime = $date
+      ->setTimezone(new DateTimeZone('UTC'))
+      ->getTimestamp();
+  }
+
+  public static function resetMockTime() {
+    static::$mockTime = null;
+  }
+
+  protected static function now(): int {
+    return static::$mockTime ?? time();
   }
 
   public static function option(string $key, $default = null) {
@@ -128,30 +144,38 @@ class KirbyStats {
     // daily visits.
     // See https://withcabin.com/blog/how-cabin-measures-unique-visitors-without-cookies
     // Thanks Cabin for sharing this! :)
-    $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null;
-    $clientTimestamp = $ifModifiedSince ? strtotime($ifModifiedSince) : null;
-    $midnight = strtotime('today midnight UTC');
-    $isVisit = false;
-
-    if ($clientTimestamp && $clientTimestamp >= $midnight) {
-      // Subsequent visit (view): increment by 1 second.
-      $newTimestamp = $clientTimestamp + 1;
-    } else {
-      // First visit today.
-      $newTimestamp = $midnight;
-      $isVisit = true;
-    }
 
     $response = kirby()->response();
-    $secondsUntilMidnight = strtotime('tomorrow') - time();
-    $response->header(
-      'Cache-Control',
-      "public, max-age=$secondsUntilMidnight, no-cache"
-    );
+    $sessionDuration = static::option('sessionDuration');
+
+    $now = static::now();
+    // Note: we have to read the header value directly form `$_SERVER` since
+    // Kirby's `request()->header()` helper can't be easily mocked for testing.
+    $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? null;
+    $sessionStart = $ifModifiedSince ? strtotime($ifModifiedSince) : $now;
+
+    $elapsedSession = $now - $sessionStart;
+    $sessionHasEnded = $elapsedSession > $sessionDuration;
+
+    if ($sessionHasEnded) {
+      $sessionStart = $now;
+    }
+
     $response->header(
       'Last-Modified',
-      gmdate('D, d M Y H:i:s', $newTimestamp) . ' GMT'
+      gmdate('D, d M Y H:i:s', $sessionStart) . ' GMT'
     );
+    // Use the session duration max-age as a fallback.
+    $response->header(
+      'Cache-Control',
+      "private, must-revalidate, max-age=$sessionDuration"
+    );
+
+    $isVisit = $sessionStart === $now;
+    if (option('debug')) {
+      $response->header('Kirby-Stats-Elapsed-Session', $elapsedSession);
+      $response->header('Kirby-Stats-Visit', $isVisit);
+    }
 
     return $isVisit;
   }
