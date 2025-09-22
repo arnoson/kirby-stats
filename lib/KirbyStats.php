@@ -91,7 +91,7 @@ class KirbyStats {
 
   public static function processRequest(
     string $uuid,
-    DateTimeImmutable $date = new DateTimeImmutable()
+    DateTimeImmutable $date = new DateTimeImmutable(),
   ) {
     if (kirby()->user() || !static::option('enabled')) {
       return;
@@ -102,7 +102,7 @@ class KirbyStats {
     $device->discardBotInformation();
     $device->parse();
 
-    $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
+    $isBot = $device->isBot() || new CrawlerDetect()->isCrawler($userAgent);
     if ($isBot) {
       return;
     }
@@ -163,12 +163,12 @@ class KirbyStats {
 
     $response->header(
       'Last-Modified',
-      gmdate('D, d M Y H:i:s', $sessionStart) . ' GMT'
+      gmdate('D, d M Y H:i:s', $sessionStart) . ' GMT',
     );
     // Use the session duration max-age as a fallback.
     $response->header(
       'Cache-Control',
-      "private, must-revalidate, max-age=$sessionDuration"
+      "public, max-age=$sessionDuration, no-cache",
     );
 
     $isVisit = $sessionStart === $now;
@@ -185,7 +185,7 @@ class KirbyStats {
     DateTimeImmutable $date,
     bool $isView = false,
     bool $isVisit = false,
-    bool $isVisitor = false
+    bool $isVisitor = false,
   ) {
     $interval = Interval::fromName(static::option('interval', 'hour'));
     $time = $interval->startOf($date)->getTimestamp();
@@ -208,7 +208,7 @@ class KirbyStats {
     string $uuid,
     string $category,
     string $key,
-    DateTimeImmutable $date
+    DateTimeImmutable $date,
   ) {
     // When storing traffic data hourly, for example, the most detailed view
     // that we show in the panel is daily, since the chart displays data per
@@ -238,7 +238,7 @@ class KirbyStats {
     DateTimeImmutable $from,
     DateTimeImmutable $to,
     Interval $interval = Interval::HOUR,
-    string $uuid = 'site://'
+    string $uuid = 'site://',
   ) {
     $from = $interval->startOf($from);
     $to = $interval->startOf($to);
@@ -322,7 +322,7 @@ class KirbyStats {
 
   protected static function normalizeTraffic(
     Collection|false $rows,
-    Interval $interval
+    Interval $interval,
   ): array {
     if (!$rows) {
       return [];
@@ -382,7 +382,7 @@ class KirbyStats {
     array $traffic,
     Interval $interval,
     DateTimeImmutable $from,
-    DateTimeImmutable $to
+    DateTimeImmutable $to,
   ): array {
     $filledTraffic = [];
 
@@ -391,8 +391,8 @@ class KirbyStats {
     $hasTraffic = !!count($traffic);
 
     if ($hasTraffic) {
-      $start = (new DateTimeImmutable())->setTimestamp(min($timestamps));
-      $end = (new DateTimeImmutable())->setTimestamp(max($timestamps));
+      $start = new DateTimeImmutable()->setTimestamp(min($timestamps));
+      $end = new DateTimeImmutable()->setTimestamp(max($timestamps));
     }
 
     $period = new DatePeriod($from, $interval->interval(), $to);
@@ -426,7 +426,7 @@ class KirbyStats {
       ->order('time ASC')
       ->first();
     $timeStamp = $row ? intval($row->time()) : 0;
-    return (new DateTimeImmutable())->setTimestamp($timeStamp);
+    return new DateTimeImmutable()->setTimestamp($timeStamp);
   }
 
   public static function clear() {
