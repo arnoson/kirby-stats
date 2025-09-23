@@ -22,6 +22,7 @@
   "keywords": [],
   "author": "Arno Schlipf",
   "license": "MIT",
+  "changelogithub": {},
   "devDependencies": {
     "@prettier/plugin-php": "^0.24.0",
     "bumpp": "10.0.0",
