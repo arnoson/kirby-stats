@@ -2,7 +2,7 @@
   "name": "arnoson/kirby-stats",
   "description": "Simple and privacy friendly web statistics for Kirby CMS.",
   "type": "kirby-plugin",
-  "version": "0.0.10",
+  "version": "1.0.0-beta.1",
   "autoload": {
     "psr-4": {
       "arnoson\\KirbyStats\\": "lib"
