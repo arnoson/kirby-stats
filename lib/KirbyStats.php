@@ -102,7 +102,8 @@ class KirbyStats {
     $device->discardBotInformation();
     $device->parse();
 
-    $isBot = $device->isBot() || new CrawlerDetect()->isCrawler($userAgent);
+    $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
+
     if ($isBot) {
       return;
     }
@@ -391,8 +392,8 @@ class KirbyStats {
     $hasTraffic = !!count($traffic);
 
     if ($hasTraffic) {
-      $start = new DateTimeImmutable()->setTimestamp(min($timestamps));
-      $end = new DateTimeImmutable()->setTimestamp(max($timestamps));
+      $start = (new DateTimeImmutable())->setTimestamp(min($timestamps));
+      $end = (new DateTimeImmutable())->setTimestamp(max($timestamps));
     }
 
     $period = new DatePeriod($from, $interval->interval(), $to);
@@ -426,7 +427,7 @@ class KirbyStats {
       ->order('time ASC')
       ->first();
     $timeStamp = $row ? intval($row->time()) : 0;
-    return new DateTimeImmutable()->setTimestamp($timeStamp);
+    return (new DateTimeImmutable())->setTimestamp($timeStamp);
   }
 
   public static function clear() {

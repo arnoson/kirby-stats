@@ -9,6 +9,7 @@
     }
   },
   "require": {
+    "php": "~8.2.0 || ~8.3.0 || ~8.4.0",
     "getkirby/composer-installer": "^1.2",
     "matomo/device-detector": "^6.1",
     "jaybizzle/crawler-detect": "^1.2"

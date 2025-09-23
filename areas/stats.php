@@ -8,7 +8,7 @@ class StatsView {
   public static function createIntervalView(
     Interval $interval,
     DateTimeImmutable $date,
-    ?string $pageId = null
+    ?string $pageId = null,
   ) {
     $now = new DateTimeImmutable();
     $current = $interval->startOf($date);
@@ -74,7 +74,7 @@ class StatsView {
 
   public static function createLatestView(
     string $range,
-    ?string $pageId = null
+    ?string $pageId = null,
   ) {
     $to = (new DateTimeImmutable())->modify('tomorrow');
     [$modifier, $name, $interval] = match ($range) {
@@ -196,14 +196,14 @@ return fn() => [
           'day' => '7-days',
           'week' => '30-days',
           'month' => '12-months',
-        }
+        },
       ),
     ],
     [
       'pattern' => 'stats/(:any)/page/(:any)',
       'action' => fn($range, $page) => StatsView::createLatestView(
         $range,
-        StatsView::decodePageParam($page)
+        StatsView::decodePageParam($page),
       ),
     ],
     [
@@ -215,14 +215,14 @@ return fn() => [
       'action' => fn($interval, $date, $page) => StatsView::createIntervalView(
         Interval::fromName($interval),
         new DateTimeImmutable($date),
-        StatsView::decodePageParam($page)
+        StatsView::decodePageParam($page),
       ),
     ],
     [
       'pattern' => 'stats/(:any)/(:any)',
       'action' => fn($interval, $date) => StatsView::createIntervalView(
         Interval::fromName($interval),
-        new DateTimeImmutable($date)
+        new DateTimeImmutable($date),
       ),
     ],
   ],

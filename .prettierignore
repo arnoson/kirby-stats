@@ -12,3 +12,5 @@ composer.lock
 LICENSE
 /index.js
 /index.css
+/stats.js
+/example/assets/stats.js

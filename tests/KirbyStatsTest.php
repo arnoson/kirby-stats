@@ -33,7 +33,7 @@ function request(
   string $uuid,
   DateTimeImmutable $date,
   $isVisit = false,
-  $isVisitor = false
+  $isVisitor = false,
 ) {
   KirbyStats::mockTime($date);
   toggleVisit($isVisitor, $date);
@@ -233,6 +233,6 @@ it('returns the time of the first data', function () {
   request('page://test', $oneWeekAgo);
   request('page://test', $now);
   expect(KirbyStats::getFirstTime())->toEqual(
-    Interval::HOUR->startOf($oneWeekAgo)
+    Interval::HOUR->startOf($oneWeekAgo),
   );
 });

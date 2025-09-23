@@ -23,6 +23,6 @@ App::plugin('arnoson/kirby-stats', [
       }
       return ['lang' => F::name($file), ...$translations];
     }),
-    'lang'
+    'lang',
   ),
 ]);

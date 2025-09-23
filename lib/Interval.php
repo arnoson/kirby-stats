@@ -14,7 +14,7 @@ enum Interval: int {
   case YEAR = 4;
 
   private static function parseDate(
-    DateTimeImmutable|int $date
+    DateTimeImmutable|int $date,
   ): DateTimeImmutable {
     return is_a($date, 'DateTimeImmutable')
       ? $date
