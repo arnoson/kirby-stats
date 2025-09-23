@@ -27,7 +27,7 @@
     "@prettier/plugin-php": "^0.24.0",
     "bumpp": "10.0.0",
     "esbuild": "^0.25.5",
-    "kirbyup": "^3.0.0",
+    "kirbyup": "^3.4.0",
     "kirbyuse": "^0.12.1",
     "lint-staged": "^16.0.0",
     "prettier": "^3.5.3",
