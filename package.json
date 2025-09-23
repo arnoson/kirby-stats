@@ -22,10 +22,9 @@
   "keywords": [],
   "author": "Arno Schlipf",
   "license": "MIT",
-  "changelogithub": {},
   "devDependencies": {
     "@prettier/plugin-php": "^0.24.0",
-    "bumpp": "10.0.0",
+    "bumpp": "^10.0.0",
     "esbuild": "^0.25.5",
     "kirbyup": "^3.4.0",
     "kirbyuse": "^0.12.1",
