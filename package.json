@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "test": "./vendor/bin/pest",
     "test:format": "prettier --check .",
-    "release": "bumpp composer.json"
+    "release": "bumpp composer.json",
+    "prerelease": "npm run build"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
