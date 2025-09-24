@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ddev start && npm run dev",
     "dev": "kirbyup serve src/index.ts",
-    "build": "kirbyup src/index.ts && esbuild ./src/stats.js --minify --format=iife  --outfile=stats.js",
+    "build": "kirbyup src/index.ts && esbuild ./src/stats.js --minify --format=iife --outfile=stats.js && cp stats.js example/assets/stats.js",
     "format": "prettier --write .",
     "test": "./vendor/bin/pest",
     "test:format": "prettier --check .",
@@ -26,7 +26,6 @@
   "devDependencies": {
     "@prettier/plugin-php": "^0.24.0",
     "bumpp": "^10.0.0",
-    "esbuild": "^0.25.5",
     "kirbyup": "^3.4.0",
     "kirbyuse": "^0.12.1",
     "lint-staged": "^16.0.0",
