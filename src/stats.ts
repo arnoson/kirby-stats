@@ -17,7 +17,6 @@ const removeEventListeners = () =>
   )
 
 const sendStats = () => {
-  console.log('send stats')
   const path = location.pathname.replace(/^\//, '')
   fetch(`/kirby-stats/page/${path}`, { keepalive: true })
   fetch(`/kirby-stats/site`, { keepalive: true })
