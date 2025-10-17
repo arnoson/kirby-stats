@@ -1,15 +1,31 @@
 <?php
 
 use arnoson\KirbyStats\KirbyStats;
+use Kirby\Toolkit\A;
 
-function toggleVisit(bool $isVisit) {
+function toggleVisit(bool $isVisit, $date = new DateTimeImmutable()) {
   if ($isVisit) {
     $_SERVER['HTTP_IF_MODIFIED_SINCE'] = null;
   } else {
-    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = (new DateTimeImmutable())
-      ->setTime(0, 0, 1)
+    $_SERVER['HTTP_IF_MODIFIED_SINCE'] = $date
+      ->setTimezone(new DateTimeZone('UTC'))
+      ->modify('-1 hour')
       ->format('D, d M Y H:i:s \G\M\T');
   }
+}
+
+function request(
+  string $id,
+  DateTimeImmutable $date,
+  $isVisit = false,
+  $isVisitor = false,
+) {
+  KirbyStats::mockTime($date);
+  toggleVisit($isVisitor, $date);
+  KirbyStats::processRequest('site://', $date);
+  toggleVisit($isVisit, $date);
+  KirbyStats::processRequest($id, $date);
+  KirbyStats::resetMockTime();
 }
 
 return [
@@ -23,14 +39,21 @@ return [
   'command' => static function ($cli): void {
     $cli->out('Creating seed (this might take a while)...');
 
+    KirbyStats::clear();
+
     $faker = Faker\Factory::create();
-    $pages = kirby()->site()->index();
     $from = (new DateTimeImmutable())->modify('-' . $cli->arg('time'));
     $now = new DateTimeImmutable();
     $interval = new \DateInterval('PT1H'); // Hour interval
     $period = new \DatePeriod($from, $interval, $now);
 
+    $totalIntervals = iterator_count($period);
+    $progress = $cli->progress()->total($totalIntervals);
+
+    $pages = kirby()->site()->index();
+
     foreach ($period as $date) {
+      $progress->advance();
       $hour = (int) $date->format('G'); // 0-23
 
       // Skip hours with low traffic (3am-6am) most of the time
@@ -47,10 +70,8 @@ return [
       // For each unique visitor
       for ($visitor = 0; $visitor < $uniqueVisitors; $visitor++) {
         // Track unique visitor (site-wide)
+        $isVisitor = true;
         $_SERVER['HTTP_USER_AGENT'] = $faker->userAgent();
-        toggleVisit(true);
-        KirbyStats::processRequest('site://', $date);
-        toggleVisit(false);
 
         // Each visitor views 1-5 different pages
         $pagesToVisit = rand(1, 5);
@@ -64,27 +85,25 @@ return [
           } elseif ($weight <= 10) {
             $page = page('about');
           } else {
-            $page = kirby()
-              ->site()
-              ->index()
-              ->nth(rand(0, $pages->count() - 1));
+            $page = $pages->nth(rand(0, $pages->count() - 1));
           }
-          $uuid = $page->uuid()->toString();
+
+          $path = $page->isHomePage() ? '' : $page->id();
+          // For some reason `kirby()->languages()` isn't ready yet.
+          $langs = ['en', 'de'];
+          $lang = $langs[array_rand($langs)];
+          $path = "$lang/$path";
 
           // First view of this page by this visitor
-          if (!in_array($uuid, $visitedPages)) {
-            toggleVisit(true);
-            KirbyStats::processRequest($uuid, $date);
-            toggleVisit(false);
-            KirbyStats::processRequest('site://', $date);
-            $visitedPages[] = $uuid;
+          if (!in_array($path, $visitedPages)) {
+            request($path, $date, isVisit: true, isVisitor: $isVisitor);
+            $isVisitor = false;
+            $visitedPages[] = $path;
 
             // 50% chance to view the page more times
             $additionalViews = rand(0, 3);
             for ($v = 0; $v < $additionalViews; $v++) {
-              toggleVisit(false);
-              KirbyStats::processRequest($uuid, $date);
-              KirbyStats::processRequest('site://', $date);
+              request($path, $date);
             }
           }
         }

@@ -6,7 +6,7 @@ return [
   'debug' => true,
   'languages' => true,
   'arnoson.kirby-stats' => [
-    'sessionDuration' => 60,
+    'sessionDuration' => 60 * 60 * 6, // 6 hours
   ],
   'routes' => [
     [

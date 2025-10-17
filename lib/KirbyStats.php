@@ -70,7 +70,7 @@ class KirbyStats {
 
     static::$db->createTable('traffic', [
       'time' => ['type' => 'int', 'key' => 'primary'],
-      'uuid' => ['type' => 'text', 'key' => 'primary'],
+      'id' => ['type' => 'text', 'key' => 'primary'],
       'interval' => ['type' => 'int', 'key' => 'primary'],
       'views' => ['type' => 'int'],
       'visits' => ['type' => 'int'],
@@ -79,7 +79,7 @@ class KirbyStats {
 
     static::$db->createTable('meta', [
       'time' => ['type' => 'int', 'key' => 'primary'],
-      'uuid' => ['type' => 'text', 'key' => 'primary'],
+      'id' => ['type' => 'text', 'key' => 'primary'],
       'interval' => ['type' => 'int', 'key' => 'primary'],
       'category' => ['type' => 'int', 'key' => 'primary'],
       'key' => ['type' => 'text', 'key' => 'primary'],
@@ -90,26 +90,31 @@ class KirbyStats {
   }
 
   public static function processRequest(
-    string $uuid,
+    string $path,
     DateTimeImmutable $date = new DateTimeImmutable(),
   ) {
     if (kirby()->user() || !static::option('enabled')) {
       return;
     }
 
+    [$path, $languageCode] = static::stripLanguageCode($path);
+    $id = $path ?: site()->homePageId();
+
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+    if (!$userAgent) {
+      return;
+    }
+
     $device = new DeviceDetector($userAgent);
     $device->discardBotInformation();
     $device->parse();
 
     $isBot = $device->isBot() || (new CrawlerDetect())->isCrawler($userAgent);
-
     if ($isBot) {
       return;
     }
 
-    $isSite = $uuid === 'site://';
-    $isPage = Str::startsWith($uuid, 'page://');
+    $isSite = $id === 'site://';
     $isVisit = static::handleVisitTracking();
 
     if ($isSite) {
@@ -120,23 +125,38 @@ class KirbyStats {
       // If this is also a visit, it means the user visited the website for the
       // first time and therefore counts as a unique visitor.
       $isVisitor = $isVisit;
-      static::increaseTraffic($uuid, $date, isView: $isView, isVisitor: $isVisitor); // prettier-ignore
-    } elseif ($isPage) {
+      static::increaseTraffic($id, $date, isView: $isView, isVisitor: $isVisitor); // prettier-ignore
+    } else {
       // Each page tracks its own views and visits.
-      static::increaseTraffic($uuid, $date, isView: true, isVisit: $isVisit);
-      if ($isVisit) {
-        // Also increase the total page visits.
-        static::increaseTraffic('site://', $date, isVisit: true);
-      }
-    }
+      static::increaseTraffic($id, $date, isView: true, isVisit: $isVisit);
 
-    // Collecting meta data only makes sense for visits.
-    if ($isVisit) {
-      $os = OperatingSystem::getOsFamily($device->getOs('name'));
-      $os = $os === 'GNU/Linux' ? 'Linux' : $os;
-      $browser = Browser::getBrowserFamily($device->getClient('name'));
-      static::increaseMeta($uuid, 'browser', $browser, $date);
-      static::increaseMeta($uuid, 'os', $os, $date);
+      // Collecting meta data only makes sense for visits.
+      if ($isVisit) {
+        // Total page visits.
+        static::increaseTraffic('site://', $date, isVisit: true);
+
+        $os = OperatingSystem::getOsFamily($device->getOs('name'));
+        $os = $os === 'GNU/Linux' ? 'Linux' : $os;
+        static::increaseMeta($id, 'os', $os, $date);
+        static::increaseMeta('site://', 'os', $os, $date);
+
+        // The device detector classifies Edge as Internet Explorer, which might
+        // be technically correct, but doesn't make sense to me. So we also
+        // distinguish between IE and Edge.
+        $client = $device->getClient('name');
+        $browser =
+          $client === 'Microsoft Edge'
+            ? 'Microsoft Edge'
+            : Browser::getBrowserFamily($device->getClient('name'));
+
+        static::increaseMeta($id, 'browser', $browser, $date);
+        static::increaseMeta('site://', 'browser', $browser, $date);
+
+        if ($languageCode) {
+          static::increaseMeta('site://', 'language', $languageCode, $date);
+          static::increaseMeta($id, 'language', $languageCode, $date);
+        }
+      }
     }
   }
 
@@ -182,7 +202,7 @@ class KirbyStats {
   }
 
   public static function increaseTraffic(
-    string $uuid,
+    string $id,
     DateTimeImmutable $date,
     bool $isView = false,
     bool $isVisit = false,
@@ -196,17 +216,17 @@ class KirbyStats {
     $visitors = $isVisitor ? 1 : 0;
     $update = "SET views = views + $views, visits = visits + $visits, visitors = visitors + $visitors";
 
-    $query = "INSERT INTO traffic (time, uuid, interval, views, visits, visitors)
+    $query = "INSERT INTO traffic (time, id, interval, views, visits, visitors)
       VALUES (?, ?, ?, ?, ?, ?)
-      ON CONFLICT(time, uuid, interval)
+      ON CONFLICT(time, id, interval)
       DO UPDATE $update";
 
-    $bindings = [$time, $uuid, $interval->value, $views, $visits, $visitors];
+    $bindings = [$time, $id, $interval->value, $views, $visits, $visitors];
     static::db()->execute($query, $bindings);
   }
 
   public static function increaseMeta(
-    string $uuid,
+    string $id,
     string $category,
     string $key,
     DateTimeImmutable $date,
@@ -221,14 +241,14 @@ class KirbyStats {
     $interval = $trafficInterval->nextLargerInterval();
     $time = $interval->startOf($date)->getTimestamp();
 
-    $query = 'INSERT INTO meta (time, uuid, interval, category, key, value)
+    $query = 'INSERT INTO meta (time, id, interval, category, key, value)
       VALUES (?, ?, ?, ?, ?, 1)
-      ON CONFLICT(time, uuid, interval, category, key)
+      ON CONFLICT(time, id, interval, category, key)
       DO UPDATE SET value = value + 1;';
 
     static::db()->execute($query, [
       $time,
-      $uuid,
+      $id,
       $interval->value,
       $category,
       $key,
@@ -239,26 +259,32 @@ class KirbyStats {
     DateTimeImmutable $from,
     DateTimeImmutable $to,
     Interval $interval = Interval::HOUR,
-    string $uuid = 'site://',
+    ?string $id = null,
   ) {
+    $id ??= 'site://';
     $from = $interval->startOf($from);
     $to = $interval->startOf($to);
     $fromTime = $from->getTimestamp();
     $toTime = $to->getTimestamp();
 
     // Meta
-    $query = "SELECT uuid, category, key, SUM(value) AS total
+    $query = "SELECT id, category, key, SUM(value) AS total
       FROM meta
-      WHERE time BETWEEN ? AND ? AND uuid = ?
+      WHERE time BETWEEN ? AND ? AND id = ?
       GROUP BY category, key";
 
     /** @var Collection */
-    $rows = static::db()->query($query, [$fromTime, $toTime, $uuid]) ?: [];
-    $meta = ['browser' => [], 'os' => []];
+    $rows = static::db()->query($query, [$fromTime, $toTime, $id]) ?: [];
+    $meta = ['browser' => [], 'os' => [], 'language' => []];
     foreach ($rows as $row) {
-      $uuid = $row->uuid();
+      $id = $row->id();
       $category = $row->category();
       $key = $row->key();
+
+      if ($category === 'language') {
+        $key = kirby()->languages()->findBy('code', $key)?->name() ?? $key;
+      }
+
       $meta[$category] ??= [];
       $meta[$category][$key] = intval($row->total());
     }
@@ -266,48 +292,48 @@ class KirbyStats {
     // Traffic
     /** @var Collection */
     $query = "SELECT * FROM traffic
-      WHERE time BETWEEN ? AND ? AND uuid = ?
+      WHERE time BETWEEN ? AND ? AND id = ?
       ORDER BY time ASC";
     /** @var Collection */
-    $rows = static::db()->query($query, [$fromTime, $toTime, $uuid]);
+    $rows = static::db()->query($query, [$fromTime, $toTime, $id]);
     $traffic = static::normalizeTraffic($rows, $interval);
     $traffic = static::fillMissingTraffic($traffic, $interval, $from, $to);
 
     // Total traffic for page(s)
-    if ($uuid === 'site://') {
+    if ($id === 'site://') {
       // For site-wide stats, sum all page traffic.
-      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
+      $query = "SELECT id, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
         WHERE time BETWEEN ? AND ?
-        GROUP BY uuid";
+        GROUP BY id";
       /** @var Collection */
       $rows = static::db()->query($query, [$fromTime, $toTime]) ?: [];
     } else {
-      // For a specific uuid.
-      $query = "SELECT uuid, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
-        WHERE time BETWEEN ? AND ? AND uuid = ?
-        GROUP BY uuid";
+      // For a specific id.
+      $query = "SELECT id, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
+        WHERE time BETWEEN ? AND ? AND id = ?
+        GROUP BY id";
       /** @var Collection */
-      $rows = static::db()->query($query, [$fromTime, $toTime, $uuid]) ?: [];
+      $rows = static::db()->query($query, [$fromTime, $toTime, $id]) ?: [];
     }
     $totalTraffic = [];
     foreach ($rows as $row) {
-      $uuid = $row->uuid();
-      $page = page($uuid);
+      $id = $row->id();
+      $page = page($id);
 
+      $name = null;
       if ($page) {
         $parts = [$page->title()->value()];
         while ($page = $page->parent()) {
           $parts[] = $page->title()->value();
         }
         $name = implode(' / ', array_reverse($parts));
-      } elseif ($uuid === 'site://') {
+      } elseif ($id === 'site://') {
         $name = site()->title()->value();
       }
 
-      $totalTraffic[$uuid] = [
-        'uuid' => $uuid,
-        'id' => page($uuid)?->id() ?? $uuid,
-        'name' => $name ?? $uuid,
+      $totalTraffic[$id] = [
+        'id' => $id,
+        'name' => $name ?? $id,
         'views' => intval($row->total_views()),
         'visits' => intval($row->total_visits()),
         'visitors' => intval($row->total_visitors()),
@@ -434,5 +460,34 @@ class KirbyStats {
     static::db()->dropTable('meta');
     static::db()->dropTable('traffic');
     static::$db = null;
+  }
+
+  protected static function stripLanguageCode(string $path): array {
+    if (!kirby()->multilang()) {
+      return [$path, null];
+    }
+
+    if ($path === 'site://') {
+      return [$path, null];
+    }
+
+    $languages = kirby()->languages();
+    foreach ($languages as $language) {
+      $code = $language->code();
+      if (!$code) {
+        continue;
+      }
+
+      if ($path === $code) {
+        return ['', $code];
+      }
+
+      if (Str::startsWith($path, "$code/")) {
+        $pathWithoutCode = Str::substr($path, Str::length($code) + 1);
+        return [$pathWithoutCode, $code];
+      }
+    }
+
+    return [$path, null];
   }
 }

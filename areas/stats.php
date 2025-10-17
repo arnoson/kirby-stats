@@ -8,7 +8,7 @@ class StatsView {
   public static function createIntervalView(
     Interval $interval,
     DateTimeImmutable $date,
-    ?string $pageId = null,
+    ?string $id = null,
   ) {
     $now = new DateTimeImmutable();
     $current = $interval->startOf($date);
@@ -23,7 +23,7 @@ class StatsView {
     $to = $interval->endOf($date);
 
     // Url params
-    $pageParam = $pageId ? "/page/$pageId" : '';
+    $pageParam = $id ? '/page/' . static::encodePageParam($id) : '';
     $intervalParam = $interval->name();
     $currentParam = $current->format($format);
     $lastParam = $last->format($format);
@@ -31,7 +31,7 @@ class StatsView {
 
     // Urls
     $urls = [
-      ...static::urls($pageId),
+      ...static::urls($id),
       'withPage' => "stats/$intervalParam/$currentParam/page/{{slug}}",
       'withoutPage' => "stats/$intervalParam/$currentParam",
     ];
@@ -58,8 +58,8 @@ class StatsView {
       Interval::YEAR => Interval::MONTH,
       default => Interval::DAY,
     };
-    $uuid = $pageId ? page($pageId)->uuid()->toString() : 'site://';
-    $stats = KirbyStats::data($from, $to, $dataInterval, $uuid);
+    $stats = KirbyStats::data($from, $to, $dataInterval, $id);
+    $page = $id ? ['id' => $id, 'title' => Helpers::pathTitle($id)] : null;
 
     return [
       'component' => 'kirby-stats-main-view',
@@ -67,15 +67,13 @@ class StatsView {
         'stats' => $stats,
         'labels' => $labels,
         'urls' => $urls,
-        'page' => $pageId,
+        'page' => $page,
+        'multiLang' => kirby()->multilang(),
       ],
     ];
   }
 
-  public static function createLatestView(
-    string $range,
-    ?string $pageId = null,
-  ) {
+  public static function createLatestView(string $range, ?string $id = null) {
     $to = (new DateTimeImmutable())->modify('tomorrow');
     [$modifier, $name, $interval] = match ($range) {
       'today' => ['-1 day', 'today', Interval::HOUR],
@@ -90,25 +88,17 @@ class StatsView {
     // However, for ranges like "last 7 days" or "last 30 days", navigation
     // isn't possible since these are rolling windows rather than fixed intervals
     if ($range === 'today') {
-      return static::createIntervalView(Interval::DAY, $from, $pageId);
+      return static::createIntervalView(Interval::DAY, $from, $id);
     }
 
     $urls = [
-      ...static::urls($pageId),
+      ...static::urls($id),
       'withPage' => "stats/$range/page/{{slug}}",
       'withoutPage' => "stats/$range",
     ];
 
-    $uuid = $pageId ? page($pageId)->uuid()->toString() : 'site://';
-    $stats = KirbyStats::data($from, $to, $interval, $uuid);
-
-    if ($pageId) {
-      $page = [
-        'id' => $pageId,
-        'title' => Helpers::pathTitle($pageId),
-        'uuid' => page($pageId)?->uuid()->toString(),
-      ];
-    }
+    $stats = KirbyStats::data($from, $to, $interval, $id);
+    $page = $id ? ['id' => $id, 'title' => Helpers::pathTitle($id)] : null;
 
     return [
       'component' => 'kirby-stats-main-view',
@@ -117,6 +107,7 @@ class StatsView {
         'labels' => ['date' => $label],
         'urls' => $urls,
         'page' => $page ?? null,
+        'multiLang' => kirby()->multilang(),
       ],
     ];
   }
@@ -160,7 +151,7 @@ class StatsView {
     foreach ($ranges as $name) {
       $rangeUrls[$name] = "stats/$name";
       if ($pageParam) {
-        $rangeUrls[$name] = "/page/$pageParam";
+        $rangeUrls[$name] .= "/page/$pageParam";
       }
     }
 

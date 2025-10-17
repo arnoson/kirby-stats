@@ -30,7 +30,7 @@ function toggleVisit(bool $isVisit, $date = new DateTimeImmutable()) {
 }
 
 function request(
-  string $uuid,
+  string $id,
   DateTimeImmutable $date,
   $isVisit = false,
   $isVisitor = false,
@@ -39,7 +39,7 @@ function request(
   toggleVisit($isVisitor, $date);
   KirbyStats::processRequest('site://', $date);
   toggleVisit($isVisit, $date);
-  KirbyStats::processRequest($uuid, $date);
+  KirbyStats::processRequest($id, $date);
 }
 
 it('provides data', function () {
@@ -55,22 +55,22 @@ it('provides data', function () {
   $to = $time1->modify('tomorrow');
 
   // 1 Visitor with 1 visit and two additional views to page A at 8 AM
-  request('page://a', $time1, isVisitor: true, isVisit: true);
-  request('page://a', $time1);
-  request('page://a', $time1);
+  request('a', $time1, isVisitor: true, isVisit: true);
+  request('a', $time1);
+  request('a', $time1);
 
   // 1 Visitor with 1 visit and 1 additional view to page B at 8 AM
-  request('page://b', $time1, isVisitor: true, isVisit: true);
-  request('page://b', $time1);
+  request('b', $time1, isVisitor: true, isVisit: true);
+  request('b', $time1);
 
   // 1 Visitor with 1 visit to page A at 10 AM
-  request('page://a', $time2, isVisitor: true, isVisit: true);
+  request('a', $time2, isVisitor: true, isVisit: true);
 
   // 1 Visitor with 1 visit to page B at 10 AM
-  request('page://b', $time2, isVisitor: true, isVisit: true);
+  request('b', $time2, isVisitor: true, isVisit: true);
 
   // Page A
-  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://a');
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'a');
   expect($data['traffic'][$timestamp1])->toMatchArray([
     'views' => 3,
     'visits' => 1,
@@ -87,7 +87,7 @@ it('provides data', function () {
   ]);
 
   // Page B
-  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://b');
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'b');
   expect($data['traffic'][$timestamp1])->toMatchArray([
     'views' => 2,
     'visits' => 1,
@@ -120,8 +120,21 @@ it('provides data', function () {
     'os' => ['Windows' => 4],
   ]);
   expect($data['totalTraffic'])->toMatchArray([
-    'page://a' => ['uuid' => 'page://a', 'id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2, 'visitors' => 0], // prettier-ignore
-    'page://b' => ['uuid' => 'page://b', 'id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2, 'visitors' => 0], // prettier-ignore
+    'a' => ['id' => 'a', 'id' => 'a', 'name' => 'Page A', 'views' => 4, 'visits' => 2, 'visitors' => 0], // prettier-ignore
+    'b' => ['id' => 'b', 'id' => 'b', 'name' => 'Page B', 'views' => 3, 'visits' => 2, 'visitors' => 0], // prettier-ignore
+  ]);
+});
+
+it('handles languages', function () {
+  $now = new DateTimeImmutable();
+  request('de/about', $now, isVisit: true);
+  request('en/about', $now, isVisit: true);
+
+  $from = $now->modify('today');
+  $to = $now->modify('tomorrow');
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'about');
+  expect($data['meta'])->toMatchArray([
+    'language' => ['Deutsch' => 1, 'English' => 1],
   ]);
 });
 
@@ -136,21 +149,21 @@ it('handles session length correctly', function () {
   // First request.
   $time = $sessionStart;
   KirbyStats::mockTime($time);
-  KirbyStats::processRequest('page://a', $time);
+  KirbyStats::processRequest('a', $time);
 
   // Still inside session.
   $time = $sessionStart->modify('+ 1 minute');
   KirbyStats::mockTime($time);
-  KirbyStats::processRequest('page://a', $time);
+  KirbyStats::processRequest('a', $time);
 
   // Session is up, so this should count as a new visit.
   $time = $sessionStart->modify('+ 5 minutes');
   KirbyStats::mockTime($time);
-  KirbyStats::processRequest('page://a', $time);
+  KirbyStats::processRequest('a', $time);
 
   $from = $sessionStart->modify('today');
   $to = $sessionStart->modify('tomorrow');
-  $data = KirbyStats::data($from, $to, Interval::HOUR, 'page://a');
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'a');
   $timestamp = Interval::HOUR->startOf($sessionStart)->getTimestamp();
   expect($data['traffic'][$timestamp])->toMatchArray([
     'views' => 3,

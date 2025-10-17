@@ -38,7 +38,6 @@ export type Traffic = Record<
 export type TotalTraffic = Record<
   string,
   {
-    uuid: string
     id: string
     name: string
     views: number
@@ -53,11 +52,11 @@ export type Stats = {
   meta: {
     browser: Record<string, number>
     os: Record<string, number>
+    language: Record<string, number>
   }
 }
 
 export type Page = {
   title: string
-  uuid?: string
   id: string
 }

@@ -1,6 +1,7 @@
 <?php
 
 use arnoson\KirbyStats\KirbyStats;
+use Kirby\Toolkit\Str;
 
 return [
   [
@@ -14,9 +15,8 @@ return [
   [
     'pattern' => 'kirby-stats/page/(:all?)',
     'method' => 'GET',
-    'action' => function ($path = null) {
-      $page = $path ? page($path) : site()->homePage();
-      KirbyStats::processRequest($page?->uuid()->toString() ?? "/{$path}");
+    'action' => function ($path) {
+      KirbyStats::processRequest($path);
       return ['status' => 'ok'];
     },
   ],

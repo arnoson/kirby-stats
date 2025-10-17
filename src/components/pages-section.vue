@@ -25,8 +25,8 @@ const type = computed(() => {
 type Row = { name: string; count: number; percent: number; id: string }
 const rows = computed<Row[]>(() => {
   const key = type.value
-  const data = Object.values(props.stats.totalTraffic).filter((entry) =>
-    entry.uuid.startsWith('page://'),
+  const data = Object.values(props.stats.totalTraffic).filter(
+    (entry) => !entry.id.startsWith('site://'),
   )
   const totalCount = Object.values(data).reduce((sum, v) => sum + v[key], 0)
 
