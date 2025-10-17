@@ -35,7 +35,7 @@ const rows = computed<Row[]>(() => {
       ...entry,
       count: entry[key],
       percent: Math.round(totalCount ? (entry[key] / totalCount) * 100 : 0),
-      url: props.urls.withPage?.replace('{{slug}}', toSlug(entry.id)),
+      url: props.urls.withPage?.replace('{{slug}}', encodePageParam(entry.id)),
     }))
     .sort((a, b) => b.percent - a.percent)
 })
@@ -62,8 +62,8 @@ const paginate = ({ page }: { page: number }) => {
 
 const capitalize = (text: string) => text[0]?.toUpperCase() + text.slice(1)
 
-const toSlug = (str: string) =>
-  (str.startsWith('/') ? str.slice(1) : str).replace('/', '+')
+const encodePageParam = (str: string) =>
+  (str.startsWith('/') ? str.slice(1) : str).replaceAll('/', '+')
 
 watch(filteredRows, () => paginate({ page: 1 }))
 </script>
