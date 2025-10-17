@@ -7,12 +7,14 @@ import dateNavigation from '../components/date-navigation.vue'
 import osSection from '../components/os-section.vue'
 import pagesSection from '../components/pages-section.vue'
 import { Page, Stats, Type, Urls } from '../types'
+import LanguageSection from '../components/language-section.vue'
 
 const props = defineProps<{
   stats: Stats
   urls: Urls
   labels: Record<string, string>
   page: Page
+  multiLang: boolean
 }>()
 
 const { t } = usePanel()
@@ -36,8 +38,8 @@ const compactNumber = (n: number) =>
   }).format(n)
 
 const total = computed(() => {
-  const uuid = props.page?.uuid ?? 'site://'
-  const traffic = props.stats.totalTraffic[uuid]
+  const id = props.page?.id ?? 'site://'
+  const traffic = props.stats.totalTraffic[id]
   return {
     views: compactNumber(traffic?.views ?? 0),
     visits: compactNumber(traffic?.visits ?? 0),
@@ -148,6 +150,7 @@ const total = computed(() => {
             </header>
             <browser-section :stats="stats" />
             <os-section :stats="stats" />
+            <language-section v-if="multiLang" :stats="stats" />
           </section>
         </k-column>
         <k-column width="1/2">

@@ -4,6 +4,7 @@ use arnoson\KirbyStats\KirbyStats;
 
 return [
   'debug' => true,
+  'languages' => true,
   'arnoson.kirby-stats' => [
     'sessionDuration' => 60,
   ],

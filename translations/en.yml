@@ -3,6 +3,7 @@ visits: Visits
 visitors: Visitors
 devices: Devices
 browser: Browser
+language: Language
 os: Operating system
 no-data: No data for this period
 
