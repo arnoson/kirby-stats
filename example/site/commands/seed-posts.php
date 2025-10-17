@@ -34,7 +34,7 @@ return [
       'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
     ];
 
-    $categories = ['Tutorial', 'News', 'Guide', 'Tips', 'Case Study'];
+    $categories = ['tutorial', 'news', 'guide', 'tips', 'case-study'];
 
     for ($i = 1; $i <= 60; $i++) {
       try {
