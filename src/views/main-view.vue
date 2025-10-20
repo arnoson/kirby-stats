@@ -167,6 +167,19 @@ const total = computed(() => {
   </k-panel-inside>
 </template>
 
+<style>
+.kirby-stats-main-view {
+  .k-header-buttons {
+    max-width: 100%;
+  }
+
+  .k-tag {
+    flex: 1;
+    overflow: hidden;
+  }
+}
+</style>
+
 <style scoped>
 .kirby-stats-main-view {
   /* Color tints in increments of 50 are only available since Kirby 5 */
