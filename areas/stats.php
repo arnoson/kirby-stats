@@ -15,7 +15,7 @@ class StatsView {
     $last = $interval->startOfLast($date);
     $next = $interval->startOfNext($date);
 
-    $hasLast = $date > KirbyStats::getFirstTime();
+    $hasLast = $last > KirbyStats::getFirstTime();
     $hasNext = $next < $now;
     $format = $interval === 'month' ? 'Y-m' : 'Y-m-d';
 
