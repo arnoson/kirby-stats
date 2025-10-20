@@ -9,10 +9,12 @@ use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\Client\Browser;
 use DeviceDetector\Parser\OperatingSystem;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
+use Kirby\Cms\Language;
 use Kirby\Toolkit\Collection;
 use Kirby\Database\Database;
 use Kirby\Filesystem\Dir;
 use Kirby\Filesystem\F;
+use Kirby\Http\Route;
 use Kirby\Toolkit\A;
 use Kirby\Toolkit\Str;
 
@@ -97,7 +99,7 @@ class KirbyStats {
       return;
     }
 
-    [$path, $languageCode] = static::stripLanguageCode($path);
+    [$path, $languageCode] = static::parseLanguage($path);
     $id = $path ?: site()->homePageId();
 
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
@@ -462,32 +464,61 @@ class KirbyStats {
     static::$db = null;
   }
 
-  protected static function stripLanguageCode(string $path): array {
+  protected static function parseLanguage(string $path) {
+    $path = trim($path, '/');
+
     if (!kirby()->multilang()) {
       return [$path, null];
     }
 
-    if ($path === 'site://') {
-      return [$path, null];
-    }
+    $candidates = [];
+    $rootLanguage = null;
 
-    $languages = kirby()->languages();
-    foreach ($languages as $language) {
-      $code = $language->code();
-      if (!$code) {
+    foreach (kirby()->languages() as $language) {
+      if ($language->baseurl() !== kirby()->url()) {
         continue;
       }
 
-      if ($path === $code) {
-        return ['', $code];
+      if ($language->path() === '') {
+        $rootLanguage = $language;
+        continue;
       }
 
-      if (Str::startsWith($path, "$code/")) {
-        $pathWithoutCode = Str::substr($path, Str::length($code) + 1);
-        return [$pathWithoutCode, $code];
-      }
+      $candidates[] = [
+        'language' => $language,
+        'length' => Str::length($language->path()),
+      ];
     }
 
-    return [$path, null];
+    if ($path === '' && $rootLanguage) {
+      return [$path, $rootLanguage];
+    }
+
+    // Sort candidates by descending path length to prefer longest-prefix
+    // matches.
+    usort($candidates, fn($a, $b) => $b['length'] <=> $a['length']);
+
+    foreach ($candidates as $entry) {
+      /** @var Language $language */
+      $language = $entry['language'];
+      $pattern = $language->pattern();
+
+      // create a temporary Route and use its parse() method
+      $route = new Route($pattern, 'GET', function () {});
+      $arguments = $route->parse($route->pattern(), $path);
+      if (!$arguments) {
+        continue;
+      }
+
+      $remaining = $arguments[0] ?? '';
+      $remaining = trim($remaining, '/');
+      return [$remaining, $language];
+    }
+
+    if ($rootLanguage) {
+      return [$path, $rootLanguage];
+    }
+
+    return [$path, kirby()->defaultLanguage()];
   }
 }

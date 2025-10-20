@@ -9,5 +9,5 @@ return [
   ],
   'name' => 'English',
   'translations' => [],
-  'url' => null,
+  'url' => '/',
 ];

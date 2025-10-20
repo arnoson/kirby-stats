@@ -128,7 +128,7 @@ it('provides data', function () {
 it('handles languages', function () {
   $now = new DateTimeImmutable();
   request('de/about', $now, isVisit: true);
-  request('en/about', $now, isVisit: true);
+  request('about', $now, isVisit: true); // en has the unprefixed url
 
   $from = $now->modify('today');
   $to = $now->modify('tomorrow');

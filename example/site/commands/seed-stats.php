@@ -90,9 +90,9 @@ return [
 
           $path = $page->isHomePage() ? '' : $page->id();
           // For some reason `kirby()->languages()` isn't ready yet.
-          $langs = ['en', 'de'];
+          $langs = ['', 'de/']; // en has no prefix
           $lang = $langs[array_rand($langs)];
-          $path = "$lang/$path";
+          $path = $lang . $path;
 
           // First view of this page by this visitor
           if (!in_array($path, $visitedPages)) {
