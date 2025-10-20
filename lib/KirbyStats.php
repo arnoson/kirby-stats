@@ -99,7 +99,7 @@ class KirbyStats {
       return;
     }
 
-    [$path, $languageCode] = static::parseLanguage($path);
+    [$path, $language] = static::parseLanguage($path);
     $id = $path ?: site()->homePageId();
 
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
@@ -120,43 +120,33 @@ class KirbyStats {
     $isVisit = static::handleVisitTracking();
 
     if ($isSite) {
-      // The site is special: it acts as an aggregator for all page traffic.
-      // For each page visit, we also process the site. This means the site's
-      // views represent the total number of page views.
-      $isView = true;
-      // If this is also a visit, it means the user visited the website for the
-      // first time and therefore counts as a unique visitor.
-      $isVisitor = $isVisit;
-      static::increaseTraffic($id, $date, isView: $isView, isVisitor: $isVisitor); // prettier-ignore
+      // A visit to the site means a new unique visitor.
+      if ($isVisit) {
+        static::increaseTraffic($id, $date, isVisitor: true);
+      }
     } else {
       // Each page tracks its own views and visits.
       static::increaseTraffic($id, $date, isView: true, isVisit: $isVisit);
 
       // Collecting meta data only makes sense for visits.
       if ($isVisit) {
-        // Total page visits.
-        static::increaseTraffic('site://', $date, isVisit: true);
-
         $os = OperatingSystem::getOsFamily($device->getOs('name'));
+        // GNU/Linux is more accurate, but we want to keep the labels simple.
         $os = $os === 'GNU/Linux' ? 'Linux' : $os;
         static::increaseMeta($id, 'os', $os, $date);
-        static::increaseMeta('site://', 'os', $os, $date);
 
-        // The device detector classifies Edge as Internet Explorer, which might
-        // be technically correct, but doesn't make sense to me. So we also
+        // Microsoft Edge is classified as Internet Explorer, which might be
+        // technically correct, but doesn't make sense to me. So we also
         // distinguish between IE and Edge.
         $client = $device->getClient('name');
         $browser =
           $client === 'Microsoft Edge'
             ? 'Microsoft Edge'
             : Browser::getBrowserFamily($device->getClient('name'));
-
         static::increaseMeta($id, 'browser', $browser, $date);
-        static::increaseMeta('site://', 'browser', $browser, $date);
 
-        if ($languageCode) {
-          static::increaseMeta('site://', 'language', $languageCode, $date);
-          static::increaseMeta($id, 'language', $languageCode, $date);
+        if ($language) {
+          static::increaseMeta($id, 'language', $language->code(), $date);
         }
       }
     }
@@ -264,22 +254,24 @@ class KirbyStats {
     ?string $id = null,
   ) {
     $id ??= 'site://';
+    $isSite = $id === 'site://';
     $from = $interval->startOf($from);
     $to = $interval->startOf($to);
     $fromTime = $from->getTimestamp();
     $toTime = $to->getTimestamp();
 
     // Meta
+    $where = $isSite ? '' : 'AND id = ?';
+    $bindings = $isSite ? [$fromTime, $toTime] : [$fromTime, $toTime, $id];
     $query = "SELECT id, category, key, SUM(value) AS total
       FROM meta
-      WHERE time BETWEEN ? AND ? AND id = ?
+      WHERE time BETWEEN ? AND ? $where
       GROUP BY category, key";
 
     /** @var Collection */
-    $rows = static::db()->query($query, [$fromTime, $toTime, $id]) ?: [];
+    $rows = static::db()->query($query, $bindings) ?: [];
     $meta = ['browser' => [], 'os' => [], 'language' => []];
     foreach ($rows as $row) {
-      $id = $row->id();
       $category = $row->category();
       $key = $row->key();
 
@@ -292,35 +284,30 @@ class KirbyStats {
     }
 
     // Traffic
-    /** @var Collection */
+    $where = $isSite ? '' : 'AND id = ?';
+    $bindings = $isSite ? [$fromTime, $toTime] : [$fromTime, $toTime, $id];
     $query = "SELECT * FROM traffic
-      WHERE time BETWEEN ? AND ? AND id = ?
-      ORDER BY time ASC";
+        WHERE time BETWEEN ? AND ? $where
+        ORDER BY time ASC";
+
     /** @var Collection */
-    $rows = static::db()->query($query, [$fromTime, $toTime, $id]);
+    $rows = static::db()->query($query, $bindings);
     $traffic = static::normalizeTraffic($rows, $interval);
     $traffic = static::fillMissingTraffic($traffic, $interval, $from, $to);
 
     // Total traffic for page(s)
-    if ($id === 'site://') {
-      // For site-wide stats, sum all page traffic.
-      $query = "SELECT id, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
-        WHERE time BETWEEN ? AND ?
-        GROUP BY id";
-      /** @var Collection */
-      $rows = static::db()->query($query, [$fromTime, $toTime]) ?: [];
-    } else {
-      // For a specific id.
-      $query = "SELECT id, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
-        WHERE time BETWEEN ? AND ? AND id = ?
-        GROUP BY id";
-      /** @var Collection */
-      $rows = static::db()->query($query, [$fromTime, $toTime, $id]) ?: [];
-    }
+    $where = $isSite ? '' : 'AND id = ?';
+    $bindings = $isSite ? [$fromTime, $toTime] : [$fromTime, $toTime, $id];
+    $query = "SELECT id, SUM(views) AS total_views, SUM(visits) AS total_visits, SUM(visitors) AS total_visitors from traffic
+      WHERE time BETWEEN ? AND ? $where
+      GROUP BY id";
+
+    /** @var Collection */
+    $rows = static::db()->query($query, $bindings) ?: [];
     $totalTraffic = [];
     foreach ($rows as $row) {
-      $id = $row->id();
-      $page = page($id);
+      $rowId = $row->id();
+      $page = page($rowId);
 
       $name = null;
       if ($page) {
@@ -329,13 +316,13 @@ class KirbyStats {
           $parts[] = $page->title()->value();
         }
         $name = implode(' / ', array_reverse($parts));
-      } elseif ($id === 'site://') {
+      } elseif ($rowId === 'site://') {
         $name = site()->title()->value();
       }
 
-      $totalTraffic[$id] = [
-        'id' => $id,
-        'name' => $name ?? $id,
+      $totalTraffic[$rowId] = [
+        'id' => $rowId,
+        'name' => $name ?? $rowId,
         'views' => intval($row->total_views()),
         'visits' => intval($row->total_visits()),
         'visitors' => intval($row->total_visitors()),
@@ -465,8 +452,6 @@ class KirbyStats {
   }
 
   protected static function parseLanguage(string $path) {
-    $path = trim($path, '/');
-
     if (!kirby()->multilang()) {
       return [$path, null];
     }
@@ -511,7 +496,6 @@ class KirbyStats {
       }
 
       $remaining = $arguments[0] ?? '';
-      $remaining = trim($remaining, '/');
       return [$remaining, $language];
     }
 
