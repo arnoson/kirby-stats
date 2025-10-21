@@ -39,11 +39,29 @@ const compactNumber = (n: number) =>
 
 const total = computed(() => {
   const id = props.page?.id ?? 'site://'
-  const traffic = props.stats.totalTraffic[id]
-  return {
-    views: compactNumber(traffic?.views ?? 0),
-    visits: compactNumber(traffic?.visits ?? 0),
-    visitors: compactNumber(traffic?.visitors ?? 0),
+
+  if (id === 'site://') {
+    // For site view, aggregate views and visits from all pages.
+    const allEntries = Object.values(props.stats.totalTraffic)
+    const totalViews = allEntries.reduce((sum, entry) => sum + entry.views, 0)
+    const totalVisits = allEntries.reduce((sum, entry) => sum + entry.visits, 0)
+
+    // Visitors are tracked at site level.
+    const siteEntry = props.stats.totalTraffic['site://']
+    const totalVisitors = siteEntry?.visitors ?? 0
+    return {
+      views: compactNumber(totalViews),
+      visits: compactNumber(totalVisits),
+      visitors: compactNumber(totalVisitors),
+    }
+  } else {
+    // For page view, use the specific page's traffic data
+    const traffic = props.stats.totalTraffic[id]
+    return {
+      views: compactNumber(traffic?.views ?? 0),
+      visits: compactNumber(traffic?.visits ?? 0),
+      visitors: compactNumber(traffic?.visitors ?? 0),
+    }
   }
 })
 </script>
