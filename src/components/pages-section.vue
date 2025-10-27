@@ -97,7 +97,11 @@ watch(filteredRows, () => paginate({ page: 1 }))
       :index="false"
       :columns="{
         name: { label: t('page'), type: 'kirby-stats-percent', mobile: true },
-        count: { label: capitalize(type), width: '8em', mobile: true },
+        count: {
+          label: t('arnoson.kirby-stats.' + type) || capitalize(type),
+          width: '8em',
+          mobile: true,
+        },
       }"
       :rows="paginatedRows"
       :pagination="{ ...pagination, details: true, total: filteredRows.length }"
