@@ -491,7 +491,7 @@ class KirbyStats {
       // create a temporary Route and use its parse() method
       $route = new Route($pattern, 'GET', function () {});
       $arguments = $route->parse($route->pattern(), $path);
-      if (!$arguments) {
+      if ($arguments === false) {
         continue;
       }
 

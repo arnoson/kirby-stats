@@ -127,11 +127,18 @@ it('provides data', function () {
 
 it('handles languages', function () {
   $now = new DateTimeImmutable();
-  request('de/about', $now, isVisit: true);
-  request('about', $now, isVisit: true); // en has the unprefixed url
-
   $from = $now->modify('today');
   $to = $now->modify('tomorrow');
+
+  request('de', $now, isVisit: true);
+  request('', $now, isVisit: true); // en has the unprefixed url
+  $data = KirbyStats::data($from, $to, Interval::HOUR, 'home');
+  expect($data['meta'])->toMatchArray([
+    'language' => ['Deutsch' => 1, 'English' => 1],
+  ]);
+
+  request('de/about', $now, isVisit: true);
+  request('about', $now, isVisit: true); // en has the unprefixed url
   $data = KirbyStats::data($from, $to, Interval::HOUR, 'about');
   expect($data['meta'])->toMatchArray([
     'language' => ['Deutsch' => 1, 'English' => 1],
